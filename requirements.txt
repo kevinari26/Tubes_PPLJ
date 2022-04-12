@@ -1,0 +1,7 @@
+flask
+gunicorn
+line-bot-sdk
+psycopg2
+flask-sqlalchemy
+flask-cors
+python-dotenv
