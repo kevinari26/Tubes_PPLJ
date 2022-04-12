@@ -48,6 +48,12 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
     def update(self): # update isi database
         db.session.commit()
 
+    def __str__(self): # print database
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = str(getattr(self, column.name))
+        return str(d)
+    
     @classmethod
     def searchUser(cls, stringToSearch):
         return cls.query.filter( # search id_line atau username sesuai stringToSearch
@@ -55,11 +61,7 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
             (cls.username == stringToSearch)
         ).all()
     
-    def __str__(self): # print database
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = str(getattr(self, column.name))
-        return str(d)
+    
 
 
 class DaftarUtang(db.Model): # tabel daftar utang
@@ -89,11 +91,34 @@ class DaftarUtang(db.Model): # tabel daftar utang
     def update(self): # update isi database
         db.session.commit()
 
+    def __str__(self): # print database
+        d = {}
+        for column in self.__table__.columns:
+            d[column.name] = str(getattr(self, column.name))
+        return str(d)
+    
     @classmethod
-    def total(cls, stringToSearch):
-        return cls.query.filter( # search id_line atau username sesuai stringToSearch
-            (cls.id_line == stringToSearch) |
-            (cls.username == stringToSearch)
+    def detail(cls, id_user, id_target):
+        return cls.query.filter( # search detail utang 2 orang tertentu
+            ((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
+            ((cls.id_lender == id_target) & (cls.id_debtor == id_user)) &
+            (cls.lunas == False)
+        ).order_by(
+            cls.nomor,
+        ).all()
+    
+    @classmethod
+    def detailForSum(cls, id_user): # detail untuk hitung total utang
+        return cls.query.with_entities(
+            cls.id_lender,
+            cls.id_debtor,
+            db.func.sum(cls.price).label("price"),
+        ).filter( # search id_line atau username sesuai stringToSearch
+            ((cls.id_lender == id_user) | (cls.id_debtor == id_user)) &
+            (cls.lunas == False)
+        ).group_by(
+            cls.id_lender,
+            cls.id_debtor,
         ).all()
     
     '''
@@ -137,11 +162,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
         ).all()
     '''
 
-    def __str__(self): # print database
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = str(getattr(self, column.name))
-        return str(d)
+    
 
 
 
@@ -157,7 +178,7 @@ def register(id_line, in_string):
         return "register berhasil"
     # return (listUser[0])
 
-def addUtang(id_line, msg):
+def addUtang(id_line, in_string):
     # nomor = Integer
     # id_lender = Integer
     # id_debtor = Integer
@@ -166,25 +187,45 @@ def addUtang(id_line, msg):
     # lunas = Boolean 
     # add <username target> <komentar> <harga>
 
-    datas = msg.split(" ")
+    datas = in_string.split(" ", 2)
+    debtor = datas[1]
+    datas = datas[2].rsplit(" ", 1)
     id_lender = 0
     id_debtor = 0
-    komen = datas[2]
-    price = float(datas[3])
+    komen = datas[0]
+    price = float(datas[1])
 
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
-    cekDebtor = DaftarUser.searchUser (datas[1]) # cek apakah debtor sudah register
-    if (len(cekLender) & len(cekDebtor)):
+    cekDebtor = DaftarUser.searchUser (debtor) # cek apakah debtor sudah register
+    if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         id_lender = cekLender[0].id_user
         id_debtor = cekDebtor[0].id_user
         # insert utang ke database
         DaftarUtang(id_lender, id_debtor, komen, price, False).insert()
 
+def detail(id_line, in_string):
+    user_target = in_string.split(" ")[1]
+    cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
+    cekDebtor = DaftarUser.searchUser (user_target) # cek apakah debtor sudah register
+    lender = [cekLender[0].id_user, cekLender[0].username] # id, username
+    debtor = [cekDebtor[0].id_user, cekDebtor[0].username] # id, username
+    if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
+        detailUtang = DaftarUtang.detail(lender[0], debtor[0])
+    out_string = "Detail utang %s kepada %s:\n" % (debtor[1], lender[1])
+    for row in detailUtang:
+        if (row.id_lender == lender[0]): # lender benar
+            out_string += "%.3f | %s\n" % (row.price, row.komen)
+        else: # lender terbalik
+            out_string += "%.3f | %s\n" % (-row.price, row.komen)
+    print (out_string)
+
 def total(id_line):
-    cekUser = DaftarUser.searchUser (id_line) # cek apakah user sudah register
-    if (len(cekUser)): # jika user sudah register
-
-
+    cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
+    lender = [cekLender[0].id_user, cekLender[0].username] # id, username
+    listUtang = DaftarUtang.detailForSum(cekLender[0].id_user)
+    for ele in listUtang:
+        print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.price))
+    
 
 def getUser():
     return DaftarUser.query.all()
