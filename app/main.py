@@ -113,17 +113,31 @@ def create_app(test_config=None):
 
     @app.route("/tes/tab1/") # print tabel user
     def getall1():
-        x = getUser()
-        for i in x:
-            print(i)
-        return 'OK' + ' ' + "".join(map(str, x))
+        listUser = getUser()
+        out_string = ""
+        for row in listUser:
+            # date_str = row.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            out_string += "{%d | %s | %s | %s} \n" % (row.id_user, row.id_line, row.username, row.timestamp)
+        print (out_string)
+        return 'OK' + ' ' + out_string
     
     @app.route("/tes/tab2/") # print tabel utang
     def getall2():
-        x = getUtang()
-        for i in x:
-            print(i)
-        return 'OK' + ' ' + "".join(map(str, x))
+        listUser = getUtang()
+        out_string = ""
+        for row in listUser:
+            # date_str = row.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.price, row.lunas, row.timestamp)
+        print (out_string)
+        print (listUser[0].timestamp.strftime("%Y-%m-%d"))
+        return 'OK' + ' ' + out_string
+    
+    # @app.route("/tes/tab2/") # print tabel utang
+    # def getall2():
+    #     x = getUtang()
+    #     for i in x:
+    #         print(i)
+    #     return 'OK' + ' ' + "".join(map(str, x))
     
     @app.route("/tes/add/")
     def addutang():

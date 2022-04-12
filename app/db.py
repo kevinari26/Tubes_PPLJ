@@ -17,7 +17,6 @@ def setup_db(app):
     db.app = app
     db.init_app(app)
 
-
 def db_drop_and_create_all():
     '''
         drops the database tables and starts fresh
@@ -27,11 +26,32 @@ def db_drop_and_create_all():
     db.create_all()
 
 
+class BaseMixin(object):
+    # _repr_hide = ['created_at', 'updated_at']
+    @classmethod
+    def create(cls, no_commit=False, **kw):
+        r = cls(**kw)
+        db.session.add(r)
+        if not no_commit:
+            db.session.commit()
+        return r
+
+    def update(self):
+        db.session.commit()
+        return self
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+        return self
+
+
 class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
     __tablename__ = 'daftar_user'
     id_user = db.Column(db.Integer, primary_key = True) # nomor baris sekaligus nomor id user
     id_line = db.Column(db.String(50)) # id user
     username = db.Column(db.String(20)) # username
+    timestamp = db.Column(db.DateTime(timezone=True), default=db.func.now())
     
     def __init__(self, id_line, username): # constructor
         self.id_line = id_line
@@ -48,11 +68,11 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
     def update(self): # update isi database
         db.session.commit()
 
-    def __str__(self): # print database
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = str(getattr(self, column.name))
-        return str(d)
+    # def __str__(self): # print database
+    #     d = {}
+    #     for column in self.__table__.columns:
+    #         d[column.name] = str(getattr(self, column.name))
+    #     return str(d)
     
     @classmethod
     def searchUser(cls, stringToSearch):
@@ -61,24 +81,29 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
             (cls.username == stringToSearch)
         ).all()
     
-    
+    @classmethod
+    def userById(cls, id_user):
+        return cls.query.filter( # search username sesuai id_user
+            (cls.id_user == id_user)
+        ).all()[0].username
 
 
-class DaftarUtang(db.Model): # tabel daftar utang
+class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
     __tablename__ = 'daftar_utang'
     nomor = db.Column(db.Integer, primary_key = True) # nomor baris
     id_lender = db.Column(db.Integer) # id pemberi utang
     id_debtor = db.Column(db.Integer) # id peminjam
     komen = db.Column(db.String(30)) # username
     price = db.Column(db.Float) # besar utang
-    lunas = db.Column(db.Boolean) 
+    lunas = db.Column(db.Boolean, default=False)
+    timestamp = db.Column(db.DateTime(timezone=True), default=db.func.now())
 
-    def __init__(self, id_lender, id_debtor, komen, price, lunas): # constructor
+    def __init__(self, id_lender, id_debtor, komen, price): # constructor
         self.id_lender = id_lender
         self.id_debtor = id_debtor
         self.komen = komen
         self.price = price
-        self.lunas = lunas
+        # self.lunas = lunas
 
     def insert(self): # insert ke database
         db.session.add(self)
@@ -91,11 +116,11 @@ class DaftarUtang(db.Model): # tabel daftar utang
     def update(self): # update isi database
         db.session.commit()
 
-    def __str__(self): # print database
-        d = {}
-        for column in self.__table__.columns:
-            d[column.name] = str(getattr(self, column.name))
-        return str(d)
+    # def __str__(self): # print database
+    #     d = {}
+    #     for column in self.__table__.columns:
+    #         d[column.name] = str(getattr(self, column.name))
+    #     return str(d)
     
     @classmethod
     def detail(cls, id_user, id_target):
@@ -120,6 +145,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
             cls.id_lender,
             cls.id_debtor,
         ).all()
+        
     
     '''
     @classmethod
@@ -162,7 +188,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
         ).all()
     '''
 
-    
+
 
 
 
@@ -175,8 +201,8 @@ def register(id_line, in_string):
         username = in_string.split(" ")[1]
         # insert ke database
         DaftarUser(id_line, username).insert()
+
         return "register berhasil"
-    # return (listUser[0])
 
 def addUtang(id_line, in_string):
     # nomor = Integer
@@ -201,7 +227,7 @@ def addUtang(id_line, in_string):
         id_lender = cekLender[0].id_user
         id_debtor = cekDebtor[0].id_user
         # insert utang ke database
-        DaftarUtang(id_lender, id_debtor, komen, price, False).insert()
+        DaftarUtang(id_lender, id_debtor, komen, price).insert()
 
 def detail(id_line, in_string):
     user_target = in_string.split(" ")[1]
@@ -213,19 +239,41 @@ def detail(id_line, in_string):
         detailUtang = DaftarUtang.detail(lender[0], debtor[0])
     out_string = "Detail utang %s kepada %s:\n" % (debtor[1], lender[1])
     for row in detailUtang:
-        if (row.id_lender == lender[0]): # lender benar
+        if (row.id_lender == lender[0]): # lender dihutangi oleh debtor
             out_string += "%.3f | %s\n" % (row.price, row.komen)
-        else: # lender terbalik
+        else: # lender berhutang ke debtor
             out_string += "%.3f | %s\n" % (-row.price, row.komen)
     print (out_string)
+    # detailUtang[0].price = 105
+    # detailUtang[0].update()
 
 def total(id_line):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     lender = [cekLender[0].id_user, cekLender[0].username] # id, username
     listUtang = DaftarUtang.detailForSum(cekLender[0].id_user)
+    
+    arrLender = list(map(lambda x:x.id_lender, listUtang))
+    arrDibayar = []
     for ele in listUtang:
         print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.price))
-    
+        if (ele.id_lender == lender[0]):
+            index = arrLender.index(ele.id_debtor) # cari row kebalikan dari ele
+            sum = ele.price - listUtang[index].price
+            arrDibayar.append([DaftarUser.userById(ele.id_debtor), sum])
+            
+    out_string = "%s perlu membayar kepada:\n" % (lender[1])
+    sum = 0
+    for ele in arrDibayar:
+        if (ele[1] < 0): 
+            out_string += "%s: %.3f\n" % (ele[0], abs(ele[1]))
+        sum += ele[1]
+    out_string += "\n%s akan dibayar oleh:\n" % (lender[1])
+    for ele in arrDibayar:
+        if (ele[1] > 0): 
+            out_string += "%s: %.3f\n" % (ele[0], ele[1])
+    out_string += "\nTotal utang yang harus dibayar: %.3f" % (-sum)
+    print (out_string)
+
 
 def getUser():
     return DaftarUser.query.all()
