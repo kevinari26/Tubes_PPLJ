@@ -1,18 +1,21 @@
 '''
-akses db: http://127.0.0.1:5000/tes/getall/
+run lokal: http://127.0.0.1:5000/tes/getall/
+https://botutang.herokuapp.com/tes/getall/
 link git jojo: https://github.com/JonathanGun/UtangBot
 heroku login
+heroku create
 heroku addons:create heroku-postgresql:hobby-dev --app botutang
 heroku config --app botutang
 heroku pg:psql --app botutang
 heroku logs --tail
+heroku logs --tail --app botutang
 '''
 
 
 import os
 from tkinter import Y
 from app.db import setup_db, db_drop_and_create_all
-from app.db import register, addUtang, getUser, getUtang, detail, total
+from app.db import register, addUtang, getUser, getUtang, detail, total, pay
 from flask import Flask, request, abort
 from flask_cors import CORS
 from linebot import LineBotApi, WebhookHandler
@@ -74,12 +77,16 @@ def create_app(test_config=None):
         msg = ""
         # profile = line_bot_api.get_profile(event.source.user_id)
         
-        if (event.message.text == "halo"):
-            msg = "halo juga"
-        else:
-            msg = event.message.text
+        msg = event.message.text
 
-        if (msg.lower().startswith('add ')):
+        if (msg == "halo"):
+            msg = "halo juga"
+        elif (msg.lower().startswith('register ')):
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="Command register")
+            )
+        elif (msg.lower().startswith('add ')):
             addUtang(event.source.user_id, msg)
             line_bot_api.reply_message(
                 event.reply_token,
@@ -129,7 +136,7 @@ def create_app(test_config=None):
             # date_str = row.timestamp.strftime("%Y-%m-%d %H:%M:%S")
             out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.price, row.lunas, row.timestamp)
         print (out_string)
-        print (listUser[0].timestamp.strftime("%Y-%m-%d"))
+        # print (listUser[0].timestamp.strftime("%Y-%m-%d"))
         return 'OK' + ' ' + out_string
     
     # @app.route("/tes/tab2/") # print tabel utang
@@ -165,4 +172,9 @@ def create_app(test_config=None):
         x = total("12354")
         return 'OK'
 
+    @app.route("/tes/pay/")
+    def pay1():
+        x = pay("12354", "pay andy")
+        return 'OK'
+    
     return app
