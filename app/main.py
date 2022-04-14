@@ -13,7 +13,6 @@ heroku logs --tail --app botutang
 
 
 import os
-from tkinter import Y
 from app.db import setup_db, db_drop_and_create_all
 from app.db import register, addUtang, getUser, getUtang, detail, total, pay
 from flask import Flask, request, abort
