@@ -63,8 +63,8 @@ def create_app(test_config=None):
                     event.reply_token,
                     TextSendMessage(text = out_string)
                 )
-            except:
-                pass
+            except LineBotApiError as e:
+                print (e)
         elif (msg.lower().startswith('add ')):
             addUtang(event.source.user_id, msg)
             line_bot_api.reply_message(

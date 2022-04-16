@@ -157,15 +157,14 @@ def register(id_line, in_string):
         return "Registrasi gagal.\nAkun Line ini sudah pernah registrasi dengan username: %s" % (listIdLine[0].username)
     else: # jika id line belum pernah register
         tempArr = in_string.split(" ", 1)[1].strip().split(" ") # penampung username
-        if (len(tempArr)==1): # username tidak ada spasi
+        if (len(tempArr)==1) & (tempArr[0]!=""): # username tidak ada spasi
             listUser = DaftarUser.searchUser (tempArr[0]) # cek apakah username sudah digunakan
             if (len(listUser)==0): # username tidak pernah digunakan
-                # insert ke database
-                DaftarUser(id_line, tempArr[0]).insert()
+                DaftarUser(id_line, tempArr[0]).insert() # insert ke database
                 return "Registrasi berhasil."
             else: # username sudah digunakan
                 return "Registrasi gagal.\nUsername sudah digunakan oleh akun lain."
-        else: # username ada spasi
+        elif (len(tempArr)!=1): # username ada spasi
             return "Registrasi gagal.\nUsername tidak boleh menggunakan spasi!"
 
 
