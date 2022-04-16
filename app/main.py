@@ -18,7 +18,7 @@ from app.db import register, addUtang, getUser, getUtang, detail, total, pay
 from flask import Flask, request, abort
 from flask_cors import CORS
 from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
+from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 from linebot.models import ConfirmTemplate, MessageAction, MessageEvent, PostbackAction, PostbackEvent, SourceGroup, SourceRoom, TemplateSendMessage, TextMessage, TextSendMessage  # NOQA
 
@@ -72,52 +72,60 @@ def create_app(test_config=None):
                 TextSendMessage(text=str(utangs))
             )
         elif (msg == "help"):
-            line_bot_api.reply_message(
-                event.reply_token,
-                # TextSendMessage (text = "halo"),
-                messages=[
-                TemplateSendMessage(
-                    alt_text='Confirm template',
-                    template=ConfirmTemplate(
-                        text='Are you sure?',
-                        actions=[
-                            PostbackAction(
-                                label='postback',
-                                display_text='postback text',
-                                data='action=buy&itemid=1'
-                            ),
-                            MessageAction(
-                                label='message',
-                                text='message text'
-                            )
-                        ]
-                    )
-                )],
-            )
+            try:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    # TextSendMessage (text = "halo"),
+                    messages=[
+                    TemplateSendMessage(
+                        alt_text='Confirm template',
+                        template=ConfirmTemplate(
+                            text='Are you sure?',
+                            actions=[
+                                PostbackAction(
+                                    label='postback',
+                                    display_text='postback text',
+                                    data='action=buy&itemid=1'
+                                ),
+                                MessageAction(
+                                    label='message',
+                                    text='message text'
+                                )
+                            ]
+                        )
+                    )],
+                )
+            except LineBotApiError as e:
+                print (e)
+
         elif (msg == "help2"):
-            sender_id = line_bot_api.get_profile(event.source.user_id)
-            line_bot_api.push_message(
-                sender_id,
-                # TextSendMessage (text = "halo"),
-                messages=[
-                TemplateSendMessage(
-                    alt_text='Confirm template',
-                    template=ConfirmTemplate(
-                        text='Are you sure?',
-                        actions=[
-                            PostbackAction(
-                                label='postback',
-                                display_text='postback text',
-                                data='action=buy&itemid=1'
-                            ),
-                            MessageAction(
-                                label='message',
-                                text='message text'
-                            )
-                        ]
-                    )
-                )],
-            )
+            try:
+                sender_id = line_bot_api.get_profile(event.source.user_id)
+                line_bot_api.push_message(
+                    sender_id,
+                    TextSendMessage (text = "halo"),
+                    # messages=[
+                    # TemplateSendMessage(
+                    #     alt_text='Confirm template',
+                    #     template=ConfirmTemplate(
+                    #         text='Are you sure?',
+                    #         actions=[
+                    #             PostbackAction(
+                    #                 label='postback',
+                    #                 display_text='postback text',
+                    #                 data='action=buy&itemid=1'
+                    #             ),
+                    #             MessageAction(
+                    #                 label='message',
+                    #                 text='message text'
+                    #             )
+                    #         ]
+                    #     )
+                    # )],
+                )
+            except LineBotApiError as e:
+                print (e)
+
         else:
             line_bot_api.reply_message(
                 event.reply_token,
