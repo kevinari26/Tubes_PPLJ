@@ -127,6 +127,7 @@ def create_app(test_config=None):
     @handler.add(PostbackEvent) # handler postback message
     def handle_postback(event):
         if event.postback.data == "promotion=true":
+            pass
             # line_id = event.source.user_id
             # user_profile = User.objects.get(username=line_id)
             # user_profile.promotable= True # set promotable to be True
