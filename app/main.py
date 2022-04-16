@@ -102,8 +102,9 @@ def create_app(test_config=None):
         elif (msg == "help"):
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage (
-                    text = TemplateSendMessage(
+                TextSendMessage (text = "halo"),
+                *[
+                    TemplateSendMessage(
                         alt_text='Confirm template',
                         template=ConfirmTemplate(
                             text='Are you sure?',
@@ -120,7 +121,7 @@ def create_app(test_config=None):
                             ]
                         )
                     )
-                )
+                ]
             )
         # def __handle_help(event, group_id, msg):
         # line_bot_api.reply_message(
