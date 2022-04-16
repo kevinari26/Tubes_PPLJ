@@ -20,6 +20,7 @@ from flask_cors import CORS
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import ConfirmTemplate, MessageAction, MessageEvent, PostbackAction, PostbackEvent, SourceGroup, SourceRoom, TemplateSendMessage, TextMessage, TextSendMessage  # NOQA
 
 
 def create_app(test_config=None):
@@ -98,6 +99,48 @@ def create_app(test_config=None):
                 event.reply_token,
                 TextSendMessage(text=str(utangs))
             )
+        elif (msg == "help"):
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage (
+                    text = TemplateSendMessage(
+                        alt_text='Confirm template',
+                        template=ConfirmTemplate(
+                            text='Are you sure?',
+                            actions=[
+                                PostbackAction(
+                                    label='postback',
+                                    display_text='postback text',
+                                    data='action=buy&itemid=1'
+                                ),
+                                MessageAction(
+                                    label='message',
+                                    text='message text'
+                                )
+                            ]
+                        )
+                    )
+                )
+            )
+        # def __handle_help(event, group_id, msg):
+        # line_bot_api.reply_message(
+        #     event.reply_token,
+        #     messages=[
+        #         TextSendMessage(text='group_id: ' + group_id),
+        #         *[
+        #             TemplateSendMessage(
+        #                 alt_text="Help message",
+        #                 template=CarouselTemplate(columns=[
+        #                     CarouselColumn(text=constants.HELP_MESSAGE_TEXT[kwd], title=kwd, actions=[
+        #                         PostbackAction(label="usage", data=f"help {kwd}", display_text=f"help {kwd}"),
+        #                     ])
+        #                     for kwd in constants.KEYWORDS[i * constants.HELP_ITEM_PER_PAGE: (i + 1) * constants.HELP_ITEM_PER_PAGE]
+        #                 ])
+        #             )
+        #             for i in range(1 + ((len(constants.KEYWORDS) - 1) // constants.HELP_ITEM_PER_PAGE))
+        #         ]
+        #     ]
+        # )
         else:
             line_bot_api.reply_message(
                 event.reply_token,

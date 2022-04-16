@@ -26,24 +26,6 @@ def db_drop_and_create_all():
     db.create_all()
 
 
-class BaseMixin(object):
-    # _repr_hide = ['created_at', 'updated_at']
-    @classmethod
-    def create(cls, no_commit=False, **kw):
-        r = cls(**kw)
-        db.session.add(r)
-        if not no_commit:
-            db.session.commit()
-        return r
-
-    def update(self):
-        db.session.commit()
-        return self
-
-    def delete(self):
-        db.session.delete(self)
-        db.session.commit()
-        return self
 
 
 class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
@@ -94,16 +76,21 @@ class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
     id_lender = db.Column(db.Integer) # id pemberi utang
     id_debtor = db.Column(db.Integer) # id peminjam
     komen = db.Column(db.String(30)) # username
-    price = db.Column(db.Float) # besar utang
-    lunas = db.Column(db.Boolean, default=False)
-    timestamp = db.Column(db.DateTime(timezone=True), default=db.func.now())
+    harga = db.Column(db.Float) # besar utang
+    status = db.Column(db.Integer, default=0)
+    # 0: utang baru masuk
+    # 1: utang dikonfirmasi 'yes'
+    # 2: utang dikonfirmasi 'no'
+    # 3: utang sudah dilunasi
+    time_insert = db.Column(db.DateTime(timezone=True), default=db.func.now())
+    time_konfir = db.Column(db.DateTime(timezone=True))
+    time_lunas = db.Column(db.DateTime(timezone=True))
 
-    def __init__(self, id_lender, id_debtor, komen, price): # constructor
+    def __init__(self, id_lender, id_debtor, komen, harga): # constructor
         self.id_lender = id_lender
         self.id_debtor = id_debtor
         self.komen = komen
-        self.price = price
-        # self.lunas = lunas
+        self.harga = harga
 
     def insert(self): # insert ke database
         db.session.add(self)
@@ -115,12 +102,6 @@ class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
 
     def update(self): # update isi database
         db.session.commit()
-
-    # def __str__(self): # print database
-    #     d = {}
-    #     for column in self.__table__.columns:
-    #         d[column.name] = str(getattr(self, column.name))
-    #     return str(d)
     
     @classmethod
     def detail(cls, id_user, id_target):
@@ -137,7 +118,7 @@ class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
         return cls.query.with_entities(
             cls.id_lender,
             cls.id_debtor,
-            db.func.sum(cls.price).label("price"),
+            db.func.sum(cls.harga).label("harga"),
         ).filter( # search id_line atau username sesuai stringToSearch
             ((cls.id_lender == id_user) | (cls.id_debtor == id_user)) &
             (cls.lunas == False)
@@ -160,31 +141,8 @@ class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
             (cls.is_calced.is_(False))
         ).order_by(
             cls.created_at,
-        ).all()
-
-    @classmethod
-    def get_all_aggr(cls, group_id, item_name):
-        # select taker, sum(amount) where item_name and group_id group by taker
-        return cls.query.with_entities(
-            cls.taker,
-            db.func.sum(cls.amount).label("amount"),
-        ).filter(
-            (cls.group_id == group_id) &
-            (cls.item_name == item_name)
         ).group_by(
             cls.taker,
-        ).all()
-
-    @classmethod
-    def get_all(cls, group_id, item_name):
-        # select taker, sum(amount) where item_name and group_id group by taker
-        return cls.query.with_entities(
-            cls.taker,
-            cls.amount,
-            cls.created_at,
-        ).filter(
-            (cls.group_id == group_id) &
-            (cls.item_name == item_name)
         ).all()
     '''
 
@@ -196,7 +154,7 @@ class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
 def register(id_line, in_string):
     listUser = DaftarUser.searchUser (id_line) # cek apakah user sudah register
     if (len(listUser)): # jika sudah register
-        return "Akun Line ini sudah pernah registrasi"
+        return "Akun Line ini sudah pernah registrasi dengan username: %s" % (listUser[0].username)
     else: # jika belum register
         tempArr = in_string.split(" ", 1)[1].strip().split(" ")
         if (len(tempArr==1)): # username tidak ada spasi
@@ -213,8 +171,8 @@ def addUtang(id_line, in_string):
     # id_lender = Integer
     # id_debtor = Integer
     # komen = String(30)
-    # price = Float
-    # lunas = Boolean 
+    # harga = Float
+    # status = Integer 
     # add <username target> <komentar> <harga>
 
     datas = in_string.split(" ", 2)
@@ -223,7 +181,7 @@ def addUtang(id_line, in_string):
     id_lender = 0
     id_debtor = 0
     komen = datas[0]
-    price = float(datas[1])
+    harga = float(datas[1])
 
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (debtor) # cek apakah debtor sudah register
@@ -231,7 +189,7 @@ def addUtang(id_line, in_string):
         id_lender = cekLender[0].id_user
         id_debtor = cekDebtor[0].id_user
         # insert utang ke database
-        DaftarUtang(id_lender, id_debtor, komen, price).insert()
+        DaftarUtang(id_lender, id_debtor, komen, harga).insert()
 
 
 def detail(id_line, in_string):
@@ -247,11 +205,11 @@ def detail(id_line, in_string):
         out_string = "Detail utang %s kepada %s:\n" % (debtor[1], lender[1])
         for row in detailUtang:
             if (row.id_lender == lender[0]): # lender dihutangi oleh debtor
-                out_string += "%.3f | %s\n" % (row.price, row.komen)
-                sum += row.price
+                out_string += "%.3f | %s\n" % (row.harga, row.komen)
+                sum += row.harga
             else: # lender berhutang ke debtor
-                out_string += "%.3f | %s\n" % (-row.price, row.komen)
-                sum -= row.price
+                out_string += "%.3f | %s\n" % (-row.harga, row.komen)
+                sum -= row.harga
         out_string += "\nTotal utang %s kepada %s: %.3f" % (debtor[1], lender[1], sum)
         print (out_string)
 
@@ -264,10 +222,10 @@ def total(id_line):
     arrLender = list(map(lambda x:x.id_lender, listUtang))
     arrDibayar = []
     for ele in listUtang:
-        print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.price))
+        print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.harga))
         if (ele.id_lender == lender[0]):
             index = arrLender.index(ele.id_debtor) # cari row kebalikan dari ele
-            sum = ele.price - listUtang[index].price
+            sum = ele.harga - listUtang[index].harga
             arrDibayar.append([DaftarUser.userById(ele.id_debtor), sum])
             
     out_string = "%s perlu membayar kepada:\n" % (lender[1])
