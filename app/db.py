@@ -70,7 +70,7 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
         ).all()[0].username
 
 
-class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
+class DaftarUtang(db.Model): # tabel daftar utang
     __tablename__ = 'daftar_utang'
     nomor = db.Column(db.Integer, primary_key = True) # nomor baris
     id_lender = db.Column(db.Integer) # id pemberi utang
@@ -108,7 +108,7 @@ class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
         return cls.query.filter( # search detail utang 2 orang tertentu
             (((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
             ((cls.id_lender == id_target) & (cls.id_debtor == id_user))) &
-            (cls.lunas == False)
+            (cls.status == 0)
         ).order_by(
             cls.nomor,
         ).all()
@@ -121,7 +121,7 @@ class DaftarUtang(BaseMixin, db.Model): # tabel daftar utang
             db.func.sum(cls.harga).label("harga"),
         ).filter( # search id_line atau username sesuai stringToSearch
             ((cls.id_lender == id_user) | (cls.id_debtor == id_user)) &
-            (cls.lunas == False)
+            (cls.status == 0)
         ).group_by(
             cls.id_lender,
             cls.id_debtor,
@@ -157,7 +157,7 @@ def register(id_line, in_string):
         return "Akun Line ini sudah pernah registrasi dengan username: %s" % (listUser[0].username)
     else: # jika belum register
         tempArr = in_string.split(" ", 1)[1].strip().split(" ")
-        if (len(tempArr==1)): # username tidak ada spasi
+        if (len(tempArr)==1): # username tidak ada spasi
             # insert ke database
             DaftarUser(id_line, tempArr[0]).insert()
             return "Registrasi berhasil."
@@ -251,7 +251,7 @@ def pay(id_line, in_string):
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         detailUtang = DaftarUtang.detail(lender[0], debtor[0])
     for ele in detailUtang:
-        ele.lunas = True
+        ele.status = 3
         ele.update()
     # detailUtang[0].price = 105
     # detailUtang[0].update()

@@ -175,7 +175,7 @@ def create_app(test_config=None):
         listUser = getUtang()
         out_string = ""
         for row in listUser:
-            out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.price, row.lunas, row.timestamp)
+            out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.harga, row.status, row.time_insert)
         print (out_string)
         # print (listUser[0].timestamp.strftime("%Y-%m-%d"))
         return 'OK' + ' ' + out_string
