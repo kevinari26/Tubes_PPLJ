@@ -100,29 +100,29 @@ def create_app(test_config=None):
 
         elif (msg == "help2"):
             try:
-                sender_id = line_bot_api.get_profile(event.source.user_id)
+                sender_id = line_bot_api.get_profile(event.source.user_id).user_id
                 print(sender_id)
                 line_bot_api.push_message(
                     sender_id,
-                    TextSendMessage (text = "halo"),
-                    # messages=[
-                    # TemplateSendMessage(
-                    #     alt_text='Confirm template',
-                    #     template=ConfirmTemplate(
-                    #         text='Are you sure?',
-                    #         actions=[
-                    #             PostbackAction(
-                    #                 label='postback',
-                    #                 display_text='postback text',
-                    #                 data='action=buy&itemid=1'
-                    #             ),
-                    #             MessageAction(
-                    #                 label='message',
-                    #                 text='message text'
-                    #             )
-                    #         ]
-                    #     )
-                    # )],
+                    # TextSendMessage (text = "halo"),
+                    messages=[
+                    TemplateSendMessage(
+                        alt_text='Confirm template',
+                        template=ConfirmTemplate(
+                            text='Are you sure?',
+                            actions=[
+                                PostbackAction(
+                                    label='postback',
+                                    display_text='postback text',
+                                    data='action=buy&itemid=1'
+                                ),
+                                MessageAction(
+                                    label='message',
+                                    text='message text'
+                                )
+                            ]
+                        )
+                    )],
                 )
             except LineBotApiError as e:
                 print (e)
