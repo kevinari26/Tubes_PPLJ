@@ -58,24 +58,26 @@ def create_app(test_config=None):
             msg = "halo juga"
         
         elif (msg.lower().startswith('register ')):
+            # register <username>
             try:
                 username = msg.split(" ", 1)[1].strip()
                 out_string = register (sender_id, username)
                 
                 line_bot_api.reply_message(
                     event.reply_token,
-                    TextSendMessage(text = out_string)
+                    TextSendMessage (text = out_string)
                 )
             except LineBotApiError as e:
                 print (e)
         
         elif (msg.lower().startswith('add ')):
+            # add <username debtor> <komentar> <harga>
             try:
-                dataArr = msg.split(" ", 2)
-                debtor = dataArr[1].strip # username debtor
-                dataArr = dataArr[2].rsplit(" ", 1)
-                komen = dataArr[0].strip() # keterangan benda yang diutangkan
-                harga = float(dataArr[1])
+                temp = msg.split(" ", 1)[1].strip().split(" ", 1)
+                debtor = temp[0].strip() # username debtor
+                temp = temp[1].rsplit(" ", 1)
+                komen = temp[0].strip() # keterangan benda yang diutangkan
+                harga = float(temp[1])
                 out_string, lender, id_line_debtor, nomor = addUtang(event.source.user_id, debtor, komen, harga)
                 
                 if (lender != 0):
@@ -103,18 +105,37 @@ def create_app(test_config=None):
                     )
                 line_bot_api.reply_message( # reply message untuk lender
                     event.reply_token,
-                    TextSendMessage(text= out_string)
+                    TextSendMessage (text = out_string)
                 )
             except LineBotApiError as e:
                 print (e)
         
-        elif (msg.lower().startswith('total ')):
-            utangs = getUtang()
-            print(utangs)
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text=str(utangs))
-            )
+        elif (msg.lower().startswith('detail ')):
+            # detail <username debtor>
+            try:
+                debtor = msg.split(" ", 1)[1].strip()
+                out_string = detail (event.source.user_id, debtor)
+                
+                line_bot_api.reply_message( # reply message untuk user
+                    event.reply_token,
+                    TextSendMessage (text = out_string)
+                )
+            except LineBotApiError as e:
+                print (e)
+        
+        
+        elif (msg.lower().strip() == 'total'):
+            # total
+            try:
+                debtor = msg.split(" ", 1)[1].strip()
+                out_string = detail (event.source.user_id, debtor)
+                
+                line_bot_api.reply_message( # reply message untuk user
+                    event.reply_token,
+                    TextSendMessage (text = out_string)
+                )
+            except LineBotApiError as e:
+                print (e)
         
         elif (msg == "help"):
             try:
@@ -196,30 +217,33 @@ def create_app(test_config=None):
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
         x = register("12345", "andy")
         x = register("123456", "sebas")
-        x = register("123", "kevin")
+        x = register("123", "jojo")
 
 
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi", 100)
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi2", 10)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi3", 35)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi3", -35)
         
-        a, b, c, d = addUtang("12345", "kevin", "lauk", 20)
-        a, b, c, d = addUtang("12345", "kevin", "mie goreng", 30)
+        a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
+        a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
+
+        a, b, c, d = addUtang("12345", "jojo", "lauk", 20)
+        a, b, c, d = addUtang("12345", "jojo", "mie goreng", 30)
         
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
 
-        a, b, c, d = addUtang("123456", "kevin", "sayur", 25)
-        a, b, c, d = addUtang("123456", "kevin", "nasi goreng", 31)
+        a, b, c, d = addUtang("123456", "jojo", "sayur", 25)
+        a, b, c, d = addUtang("123456", "jojo", "nasi goreng", 31)
 
         return 'OK'
     
     @app.route("/tes/reg/")
     def reg():
-        x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "kevin")
+        x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
         x = register("12345", "andy")
         x = register("123456", "sebas")
-        x = register("123", "ari")
+        x = register("123", "jonathan")
         return "OK %s" % (x)
 
     @app.route("/tes/tab1/") # print tabel user
@@ -230,7 +254,7 @@ def create_app(test_config=None):
             # date_str = row.timestamp.strftime("%Y-%m-%d %H:%M:%S")
             out_string += "{%d | %s | %s | %s} \n" % (row.id_user, row.id_line, row.username, row.timestamp)
         print (out_string)
-        return 'OK' + ' ' + out_string
+        return 'OK ' + out_string
     
     @app.route("/tes/tab2/") # print tabel utang
     def getall2():
@@ -240,14 +264,17 @@ def create_app(test_config=None):
             out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.harga, row.status, row.time_insert)
         print (out_string)
         # print (listUser[0].timestamp.strftime("%Y-%m-%d"))
-        return 'OK' + ' ' + out_string
+        return 'OK ' + out_string
     
     @app.route("/tes/add/")
     def addutang():
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi", 100)
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi2", 10)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi3", 35)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi3", -35)
         
+        a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
+        a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
+
         a, b, c, d = addUtang("12345", "kevin", "lauk", 20)
         a, b, c, d = addUtang("12345", "kevin", "mie goreng", 30)
         
@@ -260,17 +287,19 @@ def create_app(test_config=None):
     
     @app.route("/tes/detail/")
     def detail1():
-        x = detail("U8cea9944d781b6557cfba7ce0e9c91c7", "detail andy")
-        return 'OK'
+        x = detail("U8cea9944d781b6557cfba7ce0e9c91c7", "andy")
+        print (x)
+        return 'OK ' + x
 
     @app.route("/tes/total/")
     def total1():
-        x = total("U8cea9944d781b6557cfba7ce0e9c91c7")
-        return 'OK'
+        x = total ("U8cea9944d781b6557cfba7ce0e9c91c7")
+        print (x)
+        return 'OK ' + x
 
     @app.route("/tes/pay/")
     def pay1():
-        x = pay("U8cea9944d781b6557cfba7ce0e9c91c7", "pay andy")
+        x = pay   ("U8cea9944d781b6557cfba7ce0e9c91c7", "pay andy")
         return 'OK'
     
     return app
