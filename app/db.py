@@ -95,6 +95,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
     def insert(self): # insert ke database
         db.session.add(self)
         db.session.commit()
+        return self.nomor
 
     def delete(self): # delete dari database
         db.session.delete(self)
@@ -151,14 +152,15 @@ class DaftarUtang(db.Model): # tabel daftar utang
 
 
 # fungsi untuk akses database
-def register(id_line, in_string):
+def register(id_line, username):
+    # register <username>
     listIdLine = DaftarUser.searchUser (id_line) # cek apakah id line sudah pernah register
     if (len(listIdLine)): # jika id line sudah pernah register
         return "Registrasi gagal.\nAkun Line ini sudah pernah registrasi dengan username: %s" % (listIdLine[0].username)
     else: # jika id line belum pernah register
-        tempArr = in_string.split(" ", 1)[1].strip().split(" ") # penampung username
+        tempArr = username.split() # penampung username
         if (len(tempArr)==1) & (tempArr[0]!=""): # username tidak ada spasi
-            listUser = DaftarUser.searchUser (tempArr[0]) # cek apakah username sudah digunakan
+            listUser = DaftarUser.searchUser (tempArr[0].strip()) # cek apakah username sudah digunakan
             if (len(listUser)==0): # username tidak pernah digunakan
                 DaftarUser(id_line, tempArr[0]).insert() # insert ke database
                 return "Registrasi berhasil."
@@ -169,33 +171,20 @@ def register(id_line, in_string):
 
 
 
-def addUtang(id_line, in_string):
-    # nomor = Integer
-    # id_lender = Integer
-    # id_debtor = Integer
-    # komen = String(30)
-    # harga = Float
-    # status = Integer 
-    # add <username target> <komentar> <harga>
-
-    datas = in_string.split(" ", 2)
-    debtor = datas[1]
-    datas = datas[2].rsplit(" ", 1)
-    id_lender = 0
-    id_debtor = 0
-    komen = datas[0]
-    harga = float(datas[1])
-
+def addUtang(id_line, debtor, komen, harga):
+    # add <username debtor> <komentar> <harga>
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (debtor) # cek apakah debtor sudah register
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         id_lender = cekLender[0].id_user
         id_debtor = cekDebtor[0].id_user
+        lender = cekLender[0].username
+        id_line_debtor = cekDebtor[0].id_line
         # insert utang ke database
-        DaftarUtang(id_lender, id_debtor, komen, harga).insert()
-        return "Penambahan utang berhasil."
+        nomor = DaftarUtang(id_lender, id_debtor, komen, harga).insert()
+        return ("Penambahan utang '%s' untuk '%s' sebesar '%.3f' berhasil dilakukan.\nMenunggu konfirmasi dari %s." % (komen, debtor, harga, debtor), lender, id_line_debtor, nomor)
     else:
-        return "Username Anda dan/atau username target belum melakukan registrasi."
+        return ("Username Anda dan/atau username target belum melakukan registrasi.", 0, 0, 0)
 
 
 
