@@ -152,17 +152,21 @@ class DaftarUtang(db.Model): # tabel daftar utang
 
 # fungsi untuk akses database
 def register(id_line, in_string):
-    listUser = DaftarUser.searchUser (id_line) # cek apakah user sudah register
-    if (len(listUser)): # jika sudah register
-        return "Akun Line ini sudah pernah registrasi dengan username: %s" % (listUser[0].username)
-    else: # jika belum register
-        tempArr = in_string.split(" ", 1)[1].strip().split(" ")
+    listIdLine = DaftarUser.searchUser (id_line) # cek apakah id line sudah pernah register
+    if (len(listIdLine)): # jika id line sudah pernah register
+        return "Registrasi gagal.\nAkun Line ini sudah pernah registrasi dengan username: %s" % (listIdLine[0].username)
+    else: # jika id line belum pernah register
+        tempArr = in_string.split(" ", 1)[1].strip().split(" ") # penampung username
         if (len(tempArr)==1): # username tidak ada spasi
-            # insert ke database
-            DaftarUser(id_line, tempArr[0]).insert()
-            return "Registrasi berhasil."
+            listUser = DaftarUser.searchUser (tempArr[0]) # cek apakah username sudah digunakan
+            if (len(listUser)==0): # username tidak pernah digunakan
+                # insert ke database
+                DaftarUser(id_line, tempArr[0]).insert()
+                return "Registrasi berhasil."
+            else: # username sudah digunakan
+                return "Registrasi gagal.\nUsername sudah digunakan oleh akun lain."
         else: # username ada spasi
-            return "Username tidak boleh menggunakan spasi!"
+            return "Registrasi gagal.\nUsername tidak boleh menggunakan spasi!"
 
 
 

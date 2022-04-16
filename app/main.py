@@ -1,5 +1,7 @@
 '''
 run lokal: http://127.0.0.1:5000/tes/getall/
+run cloud: https://botutang.herokuapp.com/tes/tab1/
+
 https://botutang.herokuapp.com/tes/getall/
 link git jojo: https://github.com/JonathanGun/UtangBot
 heroku login
