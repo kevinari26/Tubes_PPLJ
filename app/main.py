@@ -47,17 +47,22 @@ def create_app(test_config=None):
     @handler.add(MessageEvent, message=TextMessage) # handler text message
     def handle_text_message(event):
         msg = ""
-        # profile = line_bot_api.get_profile(event.source.user_id)
+        sender_id = line_bot_api.get_profile(event.source.user_id).user_id
+        print(sender_id)
         
         msg = event.message.text
 
-        if (msg == "halo"):
+        if (msg.lower().strip() == "halo"):
             msg = "halo juga"
         elif (msg.lower().startswith('register ')):
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="Command register")
-            )
+            try:
+                out_string = register (sender_id, msg)
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text = out_string)
+                )
+            except:
+                pass
         elif (msg.lower().startswith('add ')):
             addUtang(event.source.user_id, msg)
             line_bot_api.reply_message(
@@ -100,8 +105,6 @@ def create_app(test_config=None):
 
         elif (msg == "help2"):
             try:
-                sender_id = line_bot_api.get_profile(event.source.user_id).user_id
-                print(sender_id)
                 line_bot_api.push_message(
                     sender_id,
                     # TextSendMessage (text = "halo"),
