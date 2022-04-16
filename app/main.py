@@ -55,7 +55,10 @@ def create_app(test_config=None):
         msg = event.message.text
 
         if (msg.lower().strip() == "halo"):
-            msg = "halo juga"
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage (text = "halo juga")
+            )
         
         elif (msg.lower().startswith('register ')):
             # register <username>
