@@ -101,6 +101,7 @@ def create_app(test_config=None):
         elif (msg == "help2"):
             try:
                 sender_id = line_bot_api.get_profile(event.source.user_id)
+                print(sender_id)
                 line_bot_api.push_message(
                     sender_id,
                     TextSendMessage (text = "halo"),
