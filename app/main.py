@@ -130,8 +130,20 @@ def create_app(test_config=None):
         elif (msg.lower().strip() == 'total'):
             # total
             try:
-                debtor = msg.split(" ", 1)[1].strip()
-                out_string = detail (event.source.user_id, debtor)
+                out_string = total (event.source.user_id)
+                
+                line_bot_api.reply_message( # reply message untuk user
+                    event.reply_token,
+                    TextSendMessage (text = out_string)
+                )
+            except LineBotApiError as e:
+                print (e)
+        
+        elif (msg.lower().startswith('pay ')):
+            # pay <username debtor>
+            try:
+                user_target = msg.split(" ", 1)[1].strip()
+                out_string = pay (event.source.user_id, user_target)
                 
                 line_bot_api.reply_message( # reply message untuk user
                     event.reply_token,
@@ -220,7 +232,7 @@ def create_app(test_config=None):
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
         x = register("12345", "andy")
         x = register("123456", "sebas")
-        x = register("123", "jojo")
+        x = register("123", "sam")
 
 
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi", 100)
@@ -230,14 +242,14 @@ def create_app(test_config=None):
         a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
         a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
 
-        a, b, c, d = addUtang("12345", "jojo", "lauk", 20)
-        a, b, c, d = addUtang("12345", "jojo", "mie goreng", 30)
+        a, b, c, d = addUtang("12345", "sam", "lauk", 20)
+        a, b, c, d = addUtang("12345", "sam", "mie goreng", 30)
         
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
 
-        a, b, c, d = addUtang("123456", "jojo", "sayur", 25)
-        a, b, c, d = addUtang("123456", "jojo", "nasi goreng", 31)
+        a, b, c, d = addUtang("123456", "sam", "sayur", 25)
+        a, b, c, d = addUtang("123456", "sam", "nasi goreng", 31)
 
         return 'OK'
     
@@ -302,7 +314,7 @@ def create_app(test_config=None):
 
     @app.route("/tes/pay/")
     def pay1():
-        x = pay   ("U8cea9944d781b6557cfba7ce0e9c91c7", "pay andy")
+        x = pay   ("U8cea9944d781b6557cfba7ce0e9c91c7", "andy")
         return 'OK'
     
     return app

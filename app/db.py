@@ -244,20 +244,18 @@ def total(id_line):
 
 
 
-def pay(id_line, in_string):
-    user_target = in_string.split(" ", 1)[1].strip()
+def pay(id_line, user_target):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (user_target) # cek apakah debtor sudah register
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         lender = [cekLender[0].id_user, cekLender[0].username] # id, username
         debtor = [cekDebtor[0].id_user, cekDebtor[0].username] # id, username
-        if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
-            detailUtang = DaftarUtang.detail(lender[0], debtor[0])
+        detailUtang = DaftarUtang.detail(lender[0], debtor[0])
         for ele in detailUtang:
-            ele.status = 3
-            ele.update()
-        # detailUtang[0].price = 105
-        # detailUtang[0].update()
+            if (ele.status == 0):
+                ele.status = 3
+                ele.update()
+        return "Pembayaran utang %s kepada %s berhasil dilakukan." % (lender, debtor)
     else:
         return "Username Anda dan/atau username target belum melakukan registrasi."
 
