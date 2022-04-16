@@ -161,7 +161,7 @@ def register(id_line, in_string):
             # insert ke database
             DaftarUser(id_line, tempArr[0]).insert()
             return "Registrasi berhasil."
-        else:
+        else: # username ada spasi
             return "Username tidak boleh menggunakan spasi!"
 
 
@@ -190,15 +190,20 @@ def addUtang(id_line, in_string):
         id_debtor = cekDebtor[0].id_user
         # insert utang ke database
         DaftarUtang(id_lender, id_debtor, komen, harga).insert()
+        return "Penambahan utang berhasil."
+    else:
+        return "Username Anda dan/atau username target belum melakukan registrasi."
+
 
 
 def detail(id_line, in_string):
     user_target = in_string.split(" ", 1)[1].strip()
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (user_target) # cek apakah debtor sudah register
-    lender = [cekLender[0].id_user, cekLender[0].username] # id, username
-    debtor = [cekDebtor[0].id_user, cekDebtor[0].username] # id, username
+    
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
+        lender = [cekLender[0].id_user, cekLender[0].username] # id, username
+        debtor = [cekDebtor[0].id_user, cekDebtor[0].username] # id, username
         detailUtang = DaftarUtang.detail(lender[0], debtor[0])
         
         sum = 0
@@ -212,49 +217,61 @@ def detail(id_line, in_string):
                 sum -= row.harga
         out_string += "\nTotal utang %s kepada %s: %.3f" % (debtor[1], lender[1], sum)
         print (out_string)
+    else:
+        return "Username Anda dan/atau username target belum melakukan registrasi."
+
 
 
 def total(id_line):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
-    lender = [cekLender[0].id_user, cekLender[0].username] # id, username
-    listUtang = DaftarUtang.detailForSum(cekLender[0].id_user)
-    
-    arrLender = list(map(lambda x:x.id_lender, listUtang))
-    arrDibayar = []
-    for ele in listUtang:
-        print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.harga))
-        if (ele.id_lender == lender[0]):
-            index = arrLender.index(ele.id_debtor) # cari row kebalikan dari ele
-            sum = ele.harga - listUtang[index].harga
-            arrDibayar.append([DaftarUser.userById(ele.id_debtor), sum])
-            
-    out_string = "%s perlu membayar kepada:\n" % (lender[1])
-    sum = 0
-    for ele in arrDibayar:
-        if (ele[1] < 0): 
-            out_string += "%s: %.3f\n" % (ele[0], abs(ele[1]))
-        sum += ele[1]
-    out_string += "\n%s akan dibayar oleh:\n" % (lender[1])
-    for ele in arrDibayar:
-        if (ele[1] > 0): 
-            out_string += "%s: %.3f\n" % (ele[0], ele[1])
-    out_string += "\nTotal utang yang harus dibayar %s: %.3f" % (lender[1], -sum)
-    print (out_string)
+    if (len(cekLender)):
+        lender = [cekLender[0].id_user, cekLender[0].username] # id, username
+        listUtang = DaftarUtang.detailForSum(cekLender[0].id_user)
+        
+        arrLender = list(map(lambda x:x.id_lender, listUtang))
+        arrDibayar = []
+        for ele in listUtang:
+            print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.harga))
+            if (ele.id_lender == lender[0]):
+                index = arrLender.index(ele.id_debtor) # cari row kebalikan dari ele
+                sum = ele.harga - listUtang[index].harga
+                arrDibayar.append([DaftarUser.userById(ele.id_debtor), sum])
+                
+        out_string = "%s perlu membayar kepada:\n" % (lender[1])
+        sum = 0
+        for ele in arrDibayar:
+            if (ele[1] < 0): 
+                out_string += "%s: %.3f\n" % (ele[0], abs(ele[1]))
+            sum += ele[1]
+        out_string += "\n%s akan dibayar oleh:\n" % (lender[1])
+        for ele in arrDibayar:
+            if (ele[1] > 0): 
+                out_string += "%s: %.3f\n" % (ele[0], ele[1])
+        out_string += "\nTotal utang yang harus dibayar %s: %.3f" % (lender[1], -sum)
+        print (out_string)
+    else:
+        return "Username Anda belum melakukan registrasi."
+
 
 
 def pay(id_line, in_string):
     user_target = in_string.split(" ", 1)[1].strip()
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (user_target) # cek apakah debtor sudah register
-    lender = [cekLender[0].id_user, cekLender[0].username] # id, username
-    debtor = [cekDebtor[0].id_user, cekDebtor[0].username] # id, username
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
-        detailUtang = DaftarUtang.detail(lender[0], debtor[0])
-    for ele in detailUtang:
-        ele.status = 3
-        ele.update()
-    # detailUtang[0].price = 105
-    # detailUtang[0].update()
+        lender = [cekLender[0].id_user, cekLender[0].username] # id, username
+        debtor = [cekDebtor[0].id_user, cekDebtor[0].username] # id, username
+        if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
+            detailUtang = DaftarUtang.detail(lender[0], debtor[0])
+        for ele in detailUtang:
+            ele.status = 3
+            ele.update()
+        # detailUtang[0].price = 105
+        # detailUtang[0].update()
+    else:
+        return "Username Anda dan/atau username target belum melakukan registrasi."
+
+
 
 def getUser():
     return DaftarUser.query.all()

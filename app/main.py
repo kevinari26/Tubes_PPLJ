@@ -28,39 +28,11 @@ def create_app(test_config=None):
     setup_db(app)
     CORS(app)
 
-    # reset db
-    @app.route("/tes/reset_db/")
-    def reset_db():
-        db_drop_and_create_all()
-        
-        x = register("12354", "register kevin")
-        x = register("12345", "register andy")
-        x = register("123456", "register sebas")
-        x = register("123", "register ari")
-
-
-        x = addUtang("12354", "add andy nasi 100")
-        x = addUtang("12354", "add andy nasi2 10")
-        x = addUtang("12354", "add andy nasi3 35")
-        
-        x = addUtang("12345", "add kevin lauk 20")
-        x = addUtang("12345", "add kevin mie goreng 30")
-        
-        x = addUtang("12354", "add sebas ayam rebus 8")
-        x = addUtang("12354", "add sebas ikan 9")
-
-        x = addUtang("123456", "add kevin sayur 25")
-        x = addUtang("123456", "add kevin nasi goreng 31")
-
-        return 'OK'
-
-
-
-    # handler untuk line
+    # inisialisasi
     line_bot_api = LineBotApi(os.environ.get('LINE_CHANNEL_ACCESS_TOKEN'))
     handler = WebhookHandler(os.environ.get('LINE_CHANNEL_SECRET'))
 
-    
+    # handler untuk line
     @app.route("/callback", methods=['POST'])
     def callback():
         signature = request.headers['X-Line-Signature']
@@ -72,7 +44,7 @@ def create_app(test_config=None):
             abort(400)
         return 'OK'
 
-    @handler.add(MessageEvent, message=TextMessage)
+    @handler.add(MessageEvent, message=TextMessage) # handler text message
     def handle_text_message(event):
         msg = ""
         # profile = line_bot_api.get_profile(event.source.user_id)
@@ -122,35 +94,73 @@ def create_app(test_config=None):
                     )
                 )],
             )
-        # def __handle_help(event, group_id, msg):
-        # line_bot_api.reply_message(
-        #     event.reply_token,
-        #     messages=[
-        #         TextSendMessage(text='group_id: ' + group_id),
-        #         *[
-        #             TemplateSendMessage(
-        #                 alt_text="Help message",
-        #                 template=CarouselTemplate(columns=[
-        #                     CarouselColumn(text=constants.HELP_MESSAGE_TEXT[kwd], title=kwd, actions=[
-        #                         PostbackAction(label="usage", data=f"help {kwd}", display_text=f"help {kwd}"),
-        #                     ])
-        #                     for kwd in constants.KEYWORDS[i * constants.HELP_ITEM_PER_PAGE: (i + 1) * constants.HELP_ITEM_PER_PAGE]
-        #                 ])
-        #             )
-        #             for i in range(1 + ((len(constants.KEYWORDS) - 1) // constants.HELP_ITEM_PER_PAGE))
-        #         ]
-        #     ]
-        # )
+        elif (msg == "help2"):
+            sender_id = line_bot_api.get_profile(event.source.user_id)
+            line_bot_api.push_message(
+                sender_id,
+                # TextSendMessage (text = "halo"),
+                messages=[
+                TemplateSendMessage(
+                    alt_text='Confirm template',
+                    template=ConfirmTemplate(
+                        text='Are you sure?',
+                        actions=[
+                            PostbackAction(
+                                label='postback',
+                                display_text='postback text',
+                                data='action=buy&itemid=1'
+                            ),
+                            MessageAction(
+                                label='message',
+                                text='message text'
+                            )
+                        ]
+                    )
+                )],
+            )
         else:
             line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage(text=msg)
             )
+    
+    @handler.add(PostbackEvent) # handler postback message
+    def handle_postback(event):
+        if event.postback.data == "promotion=true":
+            # line_id = event.source.user_id
+            # user_profile = User.objects.get(username=line_id)
+            # user_profile.promotable= True # set promotable to be True
+            # user_profile.save()
 
 
 
 
     # handler manual
+    @app.route("/tes/reset_db/")
+    def reset_db():
+        db_drop_and_create_all()
+        
+        x = register("12354", "register kevin")
+        x = register("12345", "register andy")
+        x = register("123456", "register sebas")
+        x = register("123", "register ari")
+
+
+        x = addUtang("12354", "add andy nasi 100")
+        x = addUtang("12354", "add andy nasi2 10")
+        x = addUtang("12354", "add andy nasi3 35")
+        
+        x = addUtang("12345", "add kevin lauk 20")
+        x = addUtang("12345", "add kevin mie goreng 30")
+        
+        x = addUtang("12354", "add sebas ayam rebus 8")
+        x = addUtang("12354", "add sebas ikan 9")
+
+        x = addUtang("123456", "add kevin sayur 25")
+        x = addUtang("123456", "add kevin nasi goreng 31")
+
+        return 'OK'
+    
     @app.route("/tes/reg/")
     def reg():
         x = register("12354", "register kevin")
@@ -179,13 +189,6 @@ def create_app(test_config=None):
         print (out_string)
         # print (listUser[0].timestamp.strftime("%Y-%m-%d"))
         return 'OK' + ' ' + out_string
-    
-    # @app.route("/tes/tab2/") # print tabel utang
-    # def getall2():
-    #     x = getUtang()
-    #     for i in x:
-    #         print(i)
-    #     return 'OK' + ' ' + "".join(map(str, x))
     
     @app.route("/tes/add/")
     def addutang():
