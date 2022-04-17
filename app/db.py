@@ -1,5 +1,6 @@
-
 import os
+from datetime import datetime
+import pytz
 from flask_sqlalchemy import SQLAlchemy
 
 
@@ -33,7 +34,7 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
     id_user = db.Column(db.Integer, primary_key = True) # nomor baris sekaligus nomor id user
     id_line = db.Column(db.String(50)) # id user
     username = db.Column(db.String(20)) # username
-    timestamp = db.Column(db.DateTime(timezone=True), default=db.func.now())
+    timestamp = db.Column(db.DateTime(timezone="Asia/Jakarta"), default=db.func.now())
 
 
     def __init__(self, id_line, username): # constructor
@@ -108,7 +109,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
         return cls.query.filter( # search detail utang 2 orang tertentu
             (((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
             ((cls.id_lender == id_target) & (cls.id_debtor == id_user))) &
-            (cls.status == 0)
+            (cls.status == 1)
         ).order_by(
             cls.nomor,
         ).all()
@@ -121,11 +122,17 @@ class DaftarUtang(db.Model): # tabel daftar utang
             db.func.sum(cls.harga).label("harga"),
         ).filter( # search id_line atau username sesuai stringToSearch
             ((cls.id_lender == id_user) | (cls.id_debtor == id_user)) &
-            (cls.status == 0)
+            (cls.status == 1)
         ).group_by(
             cls.id_lender,
             cls.id_debtor,
         ).all()
+    
+    @classmethod
+    def searchByNomor(cls, nomor): # search username sesuai id_user
+        return cls.query.filter( # return username
+            (cls.nomor == nomor)
+        ).all()[0]
 
 
 
@@ -200,7 +207,7 @@ def detail(id_line, debtor):
 
 
 
-def total(id_line):
+def total (id_line):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     # print ("halooooo %d" % (len(cekLender)))
     if (len(cekLender)):
@@ -244,7 +251,7 @@ def total(id_line):
 
 
 
-def pay(id_line, user_target):
+def pay (id_line, user_target):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (user_target) # cek apakah debtor sudah register
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
@@ -254,10 +261,22 @@ def pay(id_line, user_target):
         for ele in detailUtang:
             if (ele.status == 0):
                 ele.status = 3
+                ele.time_lunas = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
                 ele.update()
         return "Pembayaran utang %s kepada %s berhasil dilakukan." % (lender, debtor)
     else:
         return "Username Anda dan/atau username target belum melakukan registrasi."
+
+
+
+def confirm (nomor, label):
+    data = DaftarUser.searchByNomor (nomor)
+    if (label=="yes"):
+        data.status = 1
+    else:
+        data.status = 2
+    data.time_konfir = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
+    data.update()
 
 
 

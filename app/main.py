@@ -16,7 +16,8 @@ heroku logs --tail --app botutang
 
 import os
 from app.db import setup_db, db_drop_and_create_all
-from app.db import register, addUtang, getUser, getUtang, detail, total, pay
+from app.db import register, addUtang, detail, total, pay, confirm
+from app.db import getUser, getUtang 
 from flask import Flask, request, abort
 from flask_cors import CORS
 from linebot import LineBotApi, WebhookHandler
@@ -84,7 +85,7 @@ def create_app(test_config=None):
                 out_string, lender, id_line_debtor, nomor = addUtang(event.source.user_id, debtor, komen, harga)
                 
                 if (lender != 0):
-                    line_bot_api.push_message( # push message untuk lender
+                    line_bot_api.push_message( # push message untuk debtor
                         id_line_debtor,
                         messages=[
                         TemplateSendMessage(
@@ -214,8 +215,9 @@ def create_app(test_config=None):
     
     @handler.add(PostbackEvent) # handler postback message
     def handle_postback(event):
-        if event.postback.data == "promotion=true":
-            pass
+        confirm (event.postback.data, event.postback.label)
+        # if event.postback.data == "promotion=true":
+        #     pass
             # line_id = event.source.user_id
             # user_profile = User.objects.get(username=line_id)
             # user_profile.promotable= True # set promotable to be True
