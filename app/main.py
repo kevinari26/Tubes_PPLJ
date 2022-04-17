@@ -11,6 +11,10 @@ heroku config --app botutang
 heroku pg:psql --app botutang
 heroku logs --tail
 heroku logs --tail --app botutang
+
+procfile old: web: gunicorn wsgi:app
+
+run 
 '''
 
 
