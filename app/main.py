@@ -15,6 +15,21 @@ heroku logs --tail --app botutang
 procfile old: web: gunicorn wsgi:app
 
 run 
+heroku login
+heroku git:clone -a botutang 
+cd botutang
+git add .
+git commit -am "make it better"
+git push heroku master
+
+heroku login
+cd my-project/
+git init
+heroku git:remote -a vast-mesa-95190
+git add .
+git commit -am "make it better"
+git push heroku master
+heroku git:remote -a vast-mesa-95190
 '''
 
 
