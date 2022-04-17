@@ -34,7 +34,7 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
     id_user = db.Column(db.Integer, primary_key = True) # nomor baris sekaligus nomor id user
     id_line = db.Column(db.String(50)) # id user
     username = db.Column(db.String(20)) # username
-    timestamp = db.Column(db.DateTime(timezone="Asia/Jakarta"), default=db.func.now())
+    timestamp = db.Column(db.DateTime(timezone=True), default=db.func.now())
 
 
     def __init__(self, id_line, username): # constructor
@@ -85,11 +85,12 @@ class DaftarUtang(db.Model): # tabel daftar utang
     time_lunas = db.Column(db.DateTime(timezone=True))
 
 
-    def __init__(self, id_lender, id_debtor, komen, harga): # constructor
+    def __init__(self, id_lender, id_debtor, komen, harga, time_insert): # constructor
         self.id_lender = id_lender
         self.id_debtor = id_debtor
         self.komen = komen
         self.harga = harga
+        self.time_insert = time_insert
 
     def insert(self): # insert ke database
         db.session.add(self)
@@ -172,10 +173,11 @@ def addUtang(id_line, debtor, komen, harga):
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         id_lender = cekLender[0].id_user
         id_debtor = cekDebtor[0].id_user
+        time_insert = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
         lender = cekLender[0].username
         id_line_debtor = cekDebtor[0].id_line
         # insert utang ke database
-        nomor = DaftarUtang(id_lender, id_debtor, komen, harga).insert()
+        nomor = DaftarUtang(id_lender, id_debtor, komen, harga, time_insert).insert()
         return ("Penambahan utang '%s' untuk '%s' sebesar '%.3f' berhasil dilakukan.\nMenunggu konfirmasi dari %s." % (komen, debtor, harga, debtor), lender, id_line_debtor, nomor)
     else:
         return ("Akun Anda dan/atau akun target belum melakukan registrasi.", 0, 0, 0)
