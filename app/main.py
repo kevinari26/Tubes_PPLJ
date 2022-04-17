@@ -207,11 +207,8 @@ def create_app(test_config=None):
             except LineBotApiError as e:
                 print (e)
 
-        # else:
-        #     line_bot_api.reply_message(
-        #         event.reply_token,
-        #         TextSendMessage(text=msg)
-        #     )
+
+
     
     @handler.add(PostbackEvent) # handler postback message
     def handle_postback(event):
