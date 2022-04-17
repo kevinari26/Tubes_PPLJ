@@ -282,6 +282,7 @@ def confirm (nomor, label):
 
 
 
+
 def getUser():
     return DaftarUser.query.all()
 
