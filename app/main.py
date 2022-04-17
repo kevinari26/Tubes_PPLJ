@@ -226,6 +226,7 @@ def create_app(test_config=None):
 
 
 
+
     # handler manual
     @app.route("/tes/reset_db/")
     def reset_db():
