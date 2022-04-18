@@ -14,7 +14,12 @@ heroku logs --tail --app botutang
 
 procfile old: web: gunicorn wsgi:app
 
-run 
+# upload kode ke server
+git push heroku main
+heroku git:remote -a botutang
+
+
+# tutorial run 
 heroku login
 heroku git:clone -a botutang 
 cd botutang
@@ -275,26 +280,6 @@ def create_app(test_config=None):
         x = register("123", "jonathan")
         return "OK %s" % (x)
 
-    @app.route("/tes/tab1/") # print tabel user
-    def getall1():
-        listUser = getUser()
-        out_string = ""
-        for row in listUser:
-            # date_str = row.timestamp.strftime("%Y-%m-%d %H:%M:%S")
-            out_string += "{%d | %s | %s | %s} \n" % (row.id_user, row.id_line, row.username, row.timestamp)
-        print (out_string)
-        return 'OK ' + out_string
-    
-    @app.route("/tes/tab2/") # print tabel utang
-    def getall2():
-        listUser = getUtang()
-        out_string = ""
-        for row in listUser:
-            out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.harga, row.status, row.time_insert)
-        print (out_string)
-        # print (listUser[0].timestamp.strftime("%Y-%m-%d"))
-        return 'OK ' + out_string
-    
     @app.route("/tes/add/")
     def addutang():
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
@@ -330,5 +315,27 @@ def create_app(test_config=None):
     def pay1():
         x = pay   ("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
         return 'OK'
+    
+
+    
+    @app.route("/tes/tab1/") # print tabel user
+    def getall1():
+        listUser = getUser()
+        out_string = ""
+        for row in listUser:
+            # date_str = row.timestamp.strftime("%Y-%m-%d %H:%M:%S")
+            out_string += "{%d | %s | %s | %s} \n" % (row.id_user, row.id_line, row.username, row.timestamp)
+        print (out_string)
+        return 'OK ' + out_string
+    
+    @app.route("/tes/tab2/") # print tabel utang
+    def getall2():
+        listUser = getUtang()
+        out_string = ""
+        for row in listUser:
+            out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.harga, row.status, row.time_insert)
+        print (out_string)
+        # print (listUser[0].timestamp.strftime("%Y-%m-%d"))
+        return 'OK ' + out_string
     
     return app
