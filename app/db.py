@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 from flask_sqlalchemy import SQLAlchemy
 
@@ -37,9 +37,10 @@ class DaftarUser(db.Model): # tabel daftar user yang sudah register ke bot
     timestamp = db.Column(db.DateTime(timezone=True), default=db.func.now())
 
 
-    def __init__(self, id_line, username): # constructor
+    def __init__(self, id_line, username, timestamp): # constructor
         self.id_line = id_line
         self.username = username
+        self.timestamp = timestamp
     def insert(self): # insert ke database
         db.session.add(self)
         db.session.commit()
@@ -152,13 +153,13 @@ def register(id_line, username):
         if (len(tempArr)==1) & (tempArr[0]!=""): # username tidak ada spasi
             listUser = DaftarUser.searchUser (tempArr[0].strip()) # cek apakah username sudah digunakan
             if (len(listUser)==0): # username tidak pernah digunakan
-                DaftarUser(id_line, tempArr[0]).insert() # insert ke database
+                timestamp = datetime.now() + timedelta(hours=2)
+                DaftarUser(id_line, tempArr[0], timestamp).insert() # insert ke database
                 return "Registrasi berhasil."
             else: # username sudah digunakan
                 return "Registrasi gagal.\nUsername sudah digunakan oleh akun lain."
         elif (len(tempArr)!=1): # username ada spasi
             return "Registrasi gagal.\nUsername tidak boleh menggunakan spasi!"
-
 
 def addUtang(id_line, debtor, komen, harga):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
@@ -174,7 +175,6 @@ def addUtang(id_line, debtor, komen, harga):
         return ("Penambahan utang '%s' untuk '%s' sebesar '%.3f' berhasil dilakukan.\nMenunggu konfirmasi dari %s." % (komen, debtor, harga, debtor), lender, id_line_debtor, nomor)
     else:
         return ("Akun Anda dan/atau akun target belum melakukan registrasi.", 0, 0, 0)
-
 
 def detail(id_line, debtor):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
@@ -198,7 +198,6 @@ def detail(id_line, debtor):
         return out_string
     else:
         return "Akun Anda dan/atau akun target belum melakukan registrasi."
-
 
 def total (id_line):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
@@ -242,7 +241,6 @@ def total (id_line):
     else:
         return "Akun Anda belum melakukan registrasi."
 
-
 def pay (id_line, user_target):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (user_target) # cek apakah debtor sudah register
@@ -258,7 +256,6 @@ def pay (id_line, user_target):
         return "Pembayaran utang %s kepada %s berhasil dilakukan." % (lender, debtor)
     else:
         return "Username Anda dan/atau username target belum melakukan registrasi."
-
 
 def confirm (nomor, status):
     data = DaftarUtang.searchByNomor (nomor)

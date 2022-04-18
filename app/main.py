@@ -157,7 +157,6 @@ def create_app(test_config=None):
             except LineBotApiError as e:
                 print (e)
         
-        
         elif (msg.lower().strip() == 'total'):
             # total
             try:
@@ -250,25 +249,25 @@ def create_app(test_config=None):
         
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
         x = register("U3d13f5d6ce0d932f34429b7555af1f50", "luck")
-        x = register("123456", "sebas")
-        x = register("123", "sam")
+        x = register("U96e17e28d1c66ed292688b530b929084", "Sebastian")
+        # x = register("123", "sam")
 
 
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
+        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
+        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
+        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
         
-        a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
-        a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
+        # a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
+        # a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
 
-        a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "lauk", 20)
-        a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "mie goreng", 30)
+        # a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "lauk", 20)
+        # a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "mie goreng", 30)
         
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
+        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
+        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
 
-        a, b, c, d = addUtang("123456", "sam", "sayur", 25)
-        a, b, c, d = addUtang("123456", "sam", "nasi goreng", 31)
+        # a, b, c, d = addUtang("123456", "sam", "sayur", 25)
+        # a, b, c, d = addUtang("123456", "sam", "nasi goreng", 31)
 
         return 'OK'
     
@@ -317,7 +316,7 @@ def create_app(test_config=None):
         return 'OK'
     
 
-    
+
     @app.route("/tes/tab1/") # print tabel user
     def getall1():
         listUser = getUser()
