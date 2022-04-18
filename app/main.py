@@ -45,7 +45,7 @@ heroku git:remote -a vast-mesa-95190
 
 import os
 from app.db import setup_db, db_drop_and_create_all
-from app.db import register, addUtang, detail, total, pay, confirm
+from app.db import register, add, add_confirm, detail, total, pay, pay_confirm
 from app.db import getUser, getUtang 
 from flask import Flask, request, abort
 from flask_cors import CORS
@@ -111,9 +111,9 @@ def create_app(test_config=None):
                 temp = temp[1].rsplit(" ", 1)
                 komen = temp[0].strip() # keterangan benda yang diutangkan
                 harga = float(temp[1])
-                out_string, lender, id_line_debtor, nomor = addUtang(event.source.user_id, debtor, komen, harga)
+                out_string, lender, id_line_debtor, nomor = add(event.source.user_id, debtor, komen, harga)
                 
-                if (lender != 0):
+                if (lender != 0): # add utang berhasil
                     line_bot_api.push_message( # push message untuk debtor
                         id_line_debtor,
                         messages=[
@@ -125,13 +125,13 @@ def create_app(test_config=None):
                                     PostbackAction(
                                         label = "terima tagihan",
                                         display_text = "Terima tagihan utang '%s' dari '%s' sebesar '%.3f'" % (komen, lender, harga),
-                                        # kirim nomor, status, id_line_lender, debtor, komen, harga
-                                        data = "%d 1 %s %s %s %.3f" % (nomor, event.source.user_id, debtor, komen, harga)
+                                        # kirim commmand, nomor, status, id_line_lender, debtor, komen, harga
+                                        data = "add_confirm %d 1 %s %s %s %.3f" % (nomor, event.source.user_id, debtor, komen, harga)
                                     ),
                                     PostbackAction(
                                         label = "tolak tagihan",
                                         display_text = "Tolak tagihan utang '%s' dari '%s' sebesar '%.3f'" % (komen, lender, harga),
-                                        data = "%d 2 %s %s %s %.3f" % (nomor, event.source.user_id, debtor, komen, harga)
+                                        data = "add_confirm %d 2 %s %s %s %.3f" % (nomor, event.source.user_id, debtor, komen, harga)
                                     ),
                                 ]
                             )
@@ -172,9 +172,37 @@ def create_app(test_config=None):
         elif (msg.lower().startswith('pay ')):
             # pay <username debtor>
             try:
-                user_target = msg.split(" ", 1)[1].strip()
-                out_string = pay (event.source.user_id, user_target)
+                # butuh out_string, id_line_lender, debtor, dibayarKeLender
+                user_lender = msg.split(" ", 1)[1].strip()
+                out_string, id_line_lender, lender, debtor, dibayarKeLender, arrNomor = pay (event.source.user_id, user_lender)
                 
+                if (debtor != 0): # pay berhasil
+                    stringNomor = ""
+                    for ele in arrNomor:
+                        stringNomor += "%d " % ele
+                    line_bot_api.push_message( # push message untuk lender
+                        id_line_lender,
+                        messages=[
+                        TemplateSendMessage(
+                            alt_text = "Pembayaran utang. Cek tagihan di smartphone Anda.",
+                            template = ConfirmTemplate(
+                                text = "'%s' melakukan pembayaran utang sebesar '%.3f'." % (debtor, dibayarKeLender),
+                                actions=[
+                                    PostbackAction(
+                                        label = "sudah diterima",
+                                        display_text = "Pembayaran utang sudah diterima dari '%s' sebesar '%.3f'" % (debtor, dibayarKeLender),
+                                        # kirim command, confirm, id_line_debtor, lender, dibayarKeLender, arrNomor
+                                        data = "pay_confirm 1 %s %s %.3f %s" % (event.source.user_id, lender, dibayarKeLender, stringNomor)
+                                    ),
+                                    PostbackAction(
+                                        label = "belum diterima",
+                                        display_text = "Pembayaran utang belum diterima dari '%s' sebesar '%.3f'" % (debtor, dibayarKeLender),
+                                        data = "pay_confirm 0 %s %s %.3f %s" % (event.source.user_id, lender, dibayarKeLender, stringNomor)
+                                    ),
+                                ]
+                            )
+                        )],
+                    )
                 line_bot_api.reply_message( # reply message untuk user
                     event.reply_token,
                     TextSendMessage (text = out_string)
@@ -184,27 +212,14 @@ def create_app(test_config=None):
         
         elif (msg == "help"):
             try:
+                out_string = 'register <username>\n'\
+                    'add <username target> <komentar> <harga>\n'\
+                    'detail <username target>\n'\
+                    'total\n'\
+                    'pay <username target>'
                 line_bot_api.reply_message(
                     event.reply_token,
-                    # TextSendMessage (text = "halo"),
-                    messages=[
-                    TemplateSendMessage(
-                        alt_text='Confirm template',
-                        template=ConfirmTemplate(
-                            text='Are you sure?',
-                            actions=[
-                                PostbackAction(
-                                    label='postback',
-                                    display_text='postback text',
-                                    data='action=buy&itemid=1'
-                                ),
-                                MessageAction(
-                                    label='message',
-                                    text='message text'
-                                )
-                            ]
-                        )
-                    )],
+                    TextSendMessage (text = out_string),
                 )
             except LineBotApiError as e:
                 print (e)
@@ -215,26 +230,55 @@ def create_app(test_config=None):
     @handler.add(PostbackEvent) # handler postback message
     def handle_postback(event):
         try:
-            # nomor, status, id_line_lender, debtor, komen, harga
-            tempArr = event.postback.data.split(" ", 4) # split data
-            nomor = int(tempArr[0])
-            status = tempArr[1]
-            id_line_lender = tempArr[2]
-            debtor = tempArr[3]
-            tempArr = tempArr[4].rsplit(" ", 1)
-            komen = tempArr[0]
-            harga = tempArr[1]
-            temp = confirm (nomor, status) # lakukan konfirmasi
-            if (temp == 0): # jika konfirmasi berhasil
-                line_bot_api.push_message( # push message ke lender untuk menunjukkan tagihan diterima atau ditolak
-                    id_line_lender,
-                    TextSendMessage (text = "Tagihan utang '%s' untuk '%s' sebesar '%s' telah diterima." % (komen, debtor, harga))
-                )
-            else:
-                line_bot_api.reply_message( # reply message untuk debtor
-                    event.reply_token,
-                    TextSendMessage (text = temp)
-                )
+            command = event.postback.data.split(" ", 1)[0] # cek command
+            if (command == "add_confirm"):
+                # command, nomor, status, id_line_lender, debtor, komen, harga
+                tempArr = event.postback.data.split(" ", 5) # split data
+                nomor = int(tempArr[1])
+                status = tempArr[2]
+                id_line_lender = tempArr[3]
+                debtor = tempArr[4]
+                tempArr = tempArr[5].rsplit(" ", 1)
+                komen = tempArr[0]
+                harga = tempArr[1]
+                temp = add_confirm (nomor, status) # lakukan konfirmasi
+                if (temp == 0): # konfirmasi berhasil
+                    if (status == 1): # utang diterima
+                        out_string = "Tagihan utang '%s' untuk '%s' sebesar '%s' telah diterima." % (komen, debtor, harga)
+                    else: # utang ditolak
+                        out_string = "Tagihan utang '%s' untuk '%s' sebesar '%s' telah ditolak." % (komen, debtor, harga)
+                    line_bot_api.push_message( # push message ke lender untuk menunjukkan tagihan diterima atau ditolak
+                        id_line_lender,
+                        TextSendMessage (text = out_string)
+                    )
+                else: # konfirmasi gagal
+                    line_bot_api.reply_message( # reply message untuk debtor
+                        event.reply_token,
+                        TextSendMessage (text = temp)
+                    )
+            elif (command == "pay_confirm"):
+                # command, confirm, id_line_debtor, lender, dibayarKeLender, arrNomor
+                tempArr = event.postback.data.split(" ", 5) # split data
+                confirm = tempArr[1]
+                id_line_debtor = tempArr[2]
+                lender = tempArr[3]
+                dibayarKeLender = tempArr[4]
+                arrNomor = list(map(int, tempArr[5].split()))
+                temp = pay_confirm (arrNomor)
+                if (temp == 0): # konfirmasi berhasil
+                    if (confirm == "1"): # konfirmasi diterima
+                        out_string = "Konfirmasi pembayaran utang kepada '%s' sebesar '%s' telah diterima oleh '%s'." % (lender, dibayarKeLender, lender)
+                    else: # konfirmasi ditolak
+                        out_string = "Konfirmasi pembayaran utang kepada '%s' sebesar '%s' telah ditolak oleh '%s'." % (lender, dibayarKeLender, lender)
+                    line_bot_api.push_message( # push message ke lender untuk menunjukkan tagihan diterima atau ditolak
+                        id_line_debtor,
+                        TextSendMessage (text = out_string)
+                    )
+                else: # konfimasi gagal
+                    line_bot_api.reply_message( # reply message untuk debtor
+                        event.reply_token,
+                        TextSendMessage (text = temp)
+                    )
         except LineBotApiError as e:
             print (e)
 
@@ -281,21 +325,21 @@ def create_app(test_config=None):
 
     @app.route("/tes/add/")
     def addutang():
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
+        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
+        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
+        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
         
-        a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
-        a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
+        a, b, c, d = add("123", "ari", "lauk lauk", 20)
+        a, b, c, d = add("123", "ari", "lauk lauk 2", 30)
 
-        a, b, c, d = addUtang("12345", "kevin", "lauk", 20)
-        a, b, c, d = addUtang("12345", "kevin", "mie goreng", 30)
+        a, b, c, d = add("12345", "kevin", "lauk", 20)
+        a, b, c, d = add("12345", "kevin", "mie goreng", 30)
         
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
+        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
+        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
 
-        a, b, c, d = addUtang("123456", "kevin", "sayur", 25)
-        a, b, c, d = addUtang("123456", "kevin", "nasi goreng", 31)
+        a, b, c, d = add("123456", "kevin", "sayur", 25)
+        a, b, c, d = add("123456", "kevin", "nasi goreng", 31)
         return 'OK'
     
     @app.route("/tes/detail/")
@@ -332,7 +376,7 @@ def create_app(test_config=None):
         listUser = getUtang()
         out_string = ""
         for row in listUser:
-            out_string += "{%d | %d | %d | %s | %.3f | %d | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.harga, row.status, row.time_insert)
+            out_string += "{%d | %d | %d | %s | %.3f | %d | %s | %s | %s} \n" % (row.nomor, row.id_lender, row.id_debtor, row.komen, row.harga, row.status, row.time_insert, row.time_konfir, row.time_lunas)
         print (out_string)
         # print (listUser[0].timestamp.strftime("%Y-%m-%d"))
         return 'OK ' + out_string

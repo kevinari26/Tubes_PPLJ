@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 import pytz
 from flask_sqlalchemy import SQLAlchemy
 
+LOCAL_TIMEZONE_GMT = 7
 
 db = SQLAlchemy()
 
@@ -75,8 +76,8 @@ class DaftarUtang(db.Model): # tabel daftar utang
     harga = db.Column(db.Float) # besar utang
     status = db.Column(db.Integer, default=0)
     # 0: utang baru masuk
-    # 1: utang dikonfirmasi 'yes'
-    # 2: utang dikonfirmasi 'no'
+    # 1: utang dikonfirmasi 'terima'
+    # 2: utang dikonfirmasi 'tolak'
     # 3: utang sudah dilunasi
     time_insert = db.Column(db.DateTime(timezone=True), default=db.func.now())
     time_konfir = db.Column(db.DateTime(timezone=True))
@@ -103,6 +104,19 @@ class DaftarUtang(db.Model): # tabel daftar utang
     @classmethod
     def detail(cls, id_user, id_target):
         return cls.query.filter( # search detail utang 2 orang tertentu
+            (((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
+            ((cls.id_lender == id_target) & (cls.id_debtor == id_user))) &
+            (cls.status == 1)
+        ).order_by(
+            cls.nomor,
+        ).all()
+    
+    @classmethod
+    def detailForPay(cls, id_user, id_target):
+        return cls.query.with_entities(
+            cls.id_lender,
+            cls.id_debtor,
+        ).filter( # search detail utang 2 orang tertentu
             (((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
             ((cls.id_lender == id_target) & (cls.id_debtor == id_user))) &
             (cls.status == 1)
@@ -153,7 +167,7 @@ def register(id_line, username):
         if (len(tempArr)==1) & (tempArr[0]!=""): # username tidak ada spasi
             listUser = DaftarUser.searchUser (tempArr[0].strip()) # cek apakah username sudah digunakan
             if (len(listUser)==0): # username tidak pernah digunakan
-                timestamp = datetime.now() + timedelta(hours=2)
+                timestamp = datetime.now() + timedelta(hours=LOCAL_TIMEZONE_GMT)
                 DaftarUser(id_line, tempArr[0], timestamp).insert() # insert ke database
                 return "Registrasi berhasil."
             else: # username sudah digunakan
@@ -161,13 +175,13 @@ def register(id_line, username):
         elif (len(tempArr)!=1): # username ada spasi
             return "Registrasi gagal.\nUsername tidak boleh menggunakan spasi!"
 
-def addUtang(id_line, debtor, komen, harga):
+def add(id_line, debtor, komen, harga):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (debtor) # cek apakah debtor sudah register
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         id_lender = cekLender[0].id_user
         id_debtor = cekDebtor[0].id_user
-        time_insert = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
+        time_insert = datetime.now() + timedelta(hours=LOCAL_TIMEZONE_GMT)
         lender = cekLender[0].username
         id_line_debtor = cekDebtor[0].id_line
         # insert utang ke database
@@ -175,6 +189,20 @@ def addUtang(id_line, debtor, komen, harga):
         return ("Penambahan utang '%s' untuk '%s' sebesar '%.3f' berhasil dilakukan.\nMenunggu konfirmasi dari %s." % (komen, debtor, harga, debtor), lender, id_line_debtor, nomor)
     else:
         return ("Akun Anda dan/atau akun target belum melakukan registrasi.", 0, 0, 0)
+
+def add_confirm (nomor, status): # confirm utang
+    data = DaftarUtang.searchByNomor (nomor)
+    if (data.status == 0): # jika belum dikonfirmasi
+        data.status = status
+        data.time_konfir = datetime.now() + timedelta(hours=LOCAL_TIMEZONE_GMT)
+        data.update()
+        return 0
+    elif (data.status == 1): # jika dikonfirmasi terima
+        return "Tagihan utang ini sudah pernah diterima."
+    elif (data.status == 2): # jika dikonfirmasi tolak
+        return "Tagihan utang ini sudah pernah ditolak."
+    elif (data.status == 3): # jika sudah lunas
+        return "Utang ini sudah dilunasi."
 
 def detail(id_line, debtor):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
@@ -186,7 +214,7 @@ def detail(id_line, debtor):
         detailUtang = DaftarUtang.detail(lender[0], debtor[0])
         
         sum = 0
-        out_string = "Detail utang %s kepada %s:\n" % (debtor[1], lender[1])
+        out_string = "Detail utang '%s' kepada '%s':\n" % (debtor[1], lender[1])
         for row in detailUtang:
             if (row.id_lender == lender[0]): # debtor berutang kepada lender
                 out_string += "%.3f | %s\n" % (row.harga, row.komen)
@@ -194,7 +222,7 @@ def detail(id_line, debtor):
             else: # lender berutang ke debtor
                 out_string += "%.3f | %s\n" % (-row.harga, row.komen)
                 sum -= row.harga
-        out_string += "\nTotal utang %s kepada %s: %.3f" % (debtor[1], lender[1], sum)
+        out_string += "\nTotal utang '%s' kepada '%s': %.3f" % (debtor[1], lender[1], sum)
         return out_string
     else:
         return "Akun Anda dan/atau akun target belum melakukan registrasi."
@@ -225,51 +253,53 @@ def total (id_line):
                 else: # jika ditemukan
                     arrDibayar_harga[index] -= ele.harga
 
-        out_string = "%s perlu membayar kepada:\n" % (lender[1])
+        out_string = "'%s' perlu membayar kepada:\n" % (lender[1])
         sum = 0
         for i in range (len(arrDibayar_harga)):
             if (arrDibayar_harga[i] < 0): 
                 out_string += "%s: %.3f\n" % (DaftarUser.userById(arrDibayar_oleh[i]), abs(arrDibayar_harga[i]))
                 sum += arrDibayar_harga[i]
-        out_string += "\n%s akan dibayar oleh:\n" % (lender[1])
+        out_string += "\n'%s' akan dibayar oleh:\n" % (lender[1])
         for i in range (len(arrDibayar_harga)):
             if (arrDibayar_harga[i] > 0): 
                 out_string += "%s: %.3f\n" % (DaftarUser.userById(arrDibayar_oleh[i]), abs(arrDibayar_harga[i]))
                 sum += arrDibayar_harga[i]
-        out_string += "\nTotal utang yang harus dibayar %s: %.3f" % (lender[1], -sum)
+        out_string += "\nTotal utang yang harus dibayar '%s': %.3f" % (lender[1], -sum)
         return out_string
     else:
         return "Akun Anda belum melakukan registrasi."
 
-def pay (id_line, user_target):
-    cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
-    cekDebtor = DaftarUser.searchUser (user_target) # cek apakah debtor sudah register
+def pay (id_line, user_lender):
+    cekLender = DaftarUser.searchUser (id_line) # cek apakah debtor sudah register
+    cekDebtor = DaftarUser.searchUser (user_lender) # cek apakah lender sudah register
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         lender = [cekLender[0].id_user, cekLender[0].username] # id, username
+        id_line_lender = cekLender[0].id_line
         debtor = [cekDebtor[0].id_user, cekDebtor[0].username] # id, username
-        detailUtang = DaftarUtang.detail(lender[0], debtor[0])
+        detailUtang = DaftarUtang.detailForPay(lender[0], debtor[0])
+        arrNomor = []
+        dibayarKeLender = 0
         for ele in detailUtang:
-            if (ele.status == 0):
-                ele.status = 3
-                ele.time_lunas = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
-                ele.update()
-        return "Pembayaran utang %s kepada %s berhasil dilakukan." % (lender, debtor)
+            arrNomor.append (ele.nomor)
+            if (ele.id_lender == lender[0]):
+                dibayarKeLender += ele.harga
+            else:
+                dibayarKeLender -= ele.harga
+        return "Pembayaran utang sebesar '%.3f' kepada '%s' telah dilakukan.\nMenunggu konfirmasi dari '%s'" % (dibayarKeLender, lender[1], lender[1]), id_line_lender, lender[1], debtor[1], dibayarKeLender, arrNomor
     else:
-        return "Username Anda dan/atau username target belum melakukan registrasi."
+        return "Username Anda dan/atau username target belum melakukan registrasi.", 0, 0, 0, 0, 0
 
-def confirm (nomor, status):
-    data = DaftarUtang.searchByNomor (nomor)
-    if (data.status == 0): # jika belum dikonfirmasi
-        data.status = status
-        data.time_konfir = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
-        data.update()
+def pay_confirm (arrNomor):
+    data0 = DaftarUtang.searchByNomor (arrNomor[0])
+    if (data0.status == 1): # belum pernah dikonfirmasi
+        for nomor in arrNomor:
+            data = DaftarUtang.searchByNomor (nomor)
+            data.status = 3
+            data.time_lunas = datetime.now() + timedelta(hours=LOCAL_TIMEZONE_GMT)
+            data.update()
         return 0
-    elif (data.status == 1): # jika dikonfirmasi terima
-        return "Tagihan utang ini sudah pernah diterima."
-    elif (data.status == 2): # jika dikonfirmasi tolak
-        return "Tagihan utang ini sudah pernah ditolak."
-    elif (data.status == 3): # jika sudah lunas
-        return "Utang ini sudah dilunasi."
+    else: # sudah pernah dikonfirmasi
+        return "Pembayaran utang ini sudah pernah dikonfirmasi."
 
 
 
