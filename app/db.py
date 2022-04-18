@@ -271,15 +271,20 @@ def pay (id_line, user_target):
 
 
 
-def confirm (nomor, label):
+def confirm (nomor, status):
     data = DaftarUser.searchByNomor (nomor)
-    if (label=="yes"):
-        data.status = 1
-    else:
-        data.status = 2
-    data.time_konfir = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
-    data.update()
-
+    if (data.status == 0): # jika belum dikonfirmasi
+        data.status = status
+        data.time_konfir = datetime.now().replace(tzinfo=pytz.timezone("Asia/Jakarta"))
+        data.update()
+        return 0
+    elif (data.status == 1): # jika dikonfirmasi terima
+        return "Tagihan utang ini sudah pernah diterima."
+    elif (data.status == 2): # jika dikonfirmasi tolak
+        return "Tagihan utang ini sudah pernah ditolak."
+    elif (data.status == 3): # jika sudah lunas
+        return "Utang ini sudah dilunasi."
+    
 
 
 

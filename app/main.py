@@ -32,6 +32,11 @@ git push heroku master
 heroku git:remote -a vast-mesa-95190
 '''
 
+# register <username>
+# add <username debtor> <komentar> <harga>
+# detail <username debtor>
+# total
+# pay <username debtor>
 
 import os
 from app.db import setup_db, db_drop_and_create_all
@@ -113,14 +118,15 @@ def create_app(test_config=None):
                                 text = "Tagihan utang '%s' dari '%s' sebesar '%.3f'" % (komen, lender, harga),
                                 actions=[
                                     PostbackAction(
-                                        label = 'yes',
-                                        display_text = 'terima tagihan',
-                                        data = nomor
+                                        label = "terima tagihan",
+                                        display_text = "Terima tagihan utang '%s' dari '%s' sebesar '%.3f'" % (komen, lender, harga),
+                                        # kirim nomor, status, id_line_lender, debtor, komen, harga
+                                        data = "%d 1 %s %s %s %.3f" % (nomor, event.source.user_id, debtor, komen, harga)
                                     ),
                                     PostbackAction(
-                                        label = 'no',
-                                        display_text = 'tolak tagihan',
-                                        data = nomor
+                                        label = "tolak tagihan",
+                                        display_text = "Tolak tagihan utang '%s' dari '%s' sebesar '%.3f'" % (komen, lender, harga),
+                                        data = "%d 2 %s %s %s %.3f" % (nomor, event.source.user_id, debtor, komen, harga)
                                     ),
                                 ]
                             )
@@ -199,45 +205,34 @@ def create_app(test_config=None):
             except LineBotApiError as e:
                 print (e)
 
-        elif (msg == "help2"):
-            try:
-                line_bot_api.push_message(
-                    sender_id,
-                    # TextSendMessage (text = "halo"),
-                    messages=[
-                    TemplateSendMessage(
-                        alt_text='Confirm template',
-                        template=ConfirmTemplate(
-                            text='Are you sure?',
-                            actions=[
-                                PostbackAction(
-                                    label='postback',
-                                    display_text='postback text',
-                                    data='action=buy&itemid=1'
-                                ),
-                                MessageAction(
-                                    label='message',
-                                    text='message text'
-                                )
-                            ]
-                        )
-                    )],
-                )
-            except LineBotApiError as e:
-                print (e)
-
 
 
     
     @handler.add(PostbackEvent) # handler postback message
     def handle_postback(event):
-        confirm (event.postback.data, event.postback.label)
-        # if event.postback.data == "promotion=true":
-        #     pass
-            # line_id = event.source.user_id
-            # user_profile = User.objects.get(username=line_id)
-            # user_profile.promotable= True # set promotable to be True
-            # user_profile.save()
+        try:
+            # nomor, status, id_line_lender, debtor, komen, harga
+            tempArr = event.postback.data.split(" ", 4) # split data
+            nomor = int(tempArr[0])
+            status = tempArr[1]
+            id_line_lender = tempArr[2]
+            debtor = tempArr[3]
+            tempArr = tempArr[4].rsplit(" ", 1)
+            komen = tempArr[0]
+            harga = tempArr[1]
+            temp = confirm (nomor, status) # lakukan konfirmasi
+            if (temp == 0): # jika konfirmasi berhasil
+                line_bot_api.push_message( # push message ke lender untuk menunjukkan tagihan diterima atau ditolak
+                    id_line_lender,
+                    TextSendMessage (text = "Tagihan utang '%s' untuk '%s' sebesar '%s' telah diterima." % (komen, debtor, harga))
+                )
+            else:
+                line_bot_api.reply_message( # reply message untuk debtor
+                    event.reply_token,
+                    TextSendMessage (text = temp)
+                )
+        except LineBotApiError as e:
+            print (e)
 
 
 
@@ -249,20 +244,20 @@ def create_app(test_config=None):
         db_drop_and_create_all()
         
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
-        x = register("12345", "andy")
+        x = register("U3d13f5d6ce0d932f34429b7555af1f50", "luck")
         x = register("123456", "sebas")
         x = register("123", "sam")
 
 
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi", 100)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi2", 10)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi3", -35)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
         
         a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
         a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
 
-        a, b, c, d = addUtang("12345", "sam", "lauk", 20)
-        a, b, c, d = addUtang("12345", "sam", "mie goreng", 30)
+        a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "lauk", 20)
+        a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "mie goreng", 30)
         
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
         a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
@@ -275,7 +270,7 @@ def create_app(test_config=None):
     @app.route("/tes/reg/")
     def reg():
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
-        x = register("12345", "andy")
+        x = register("12345", "luck")
         x = register("123456", "sebas")
         x = register("123", "jonathan")
         return "OK %s" % (x)
@@ -302,9 +297,9 @@ def create_app(test_config=None):
     
     @app.route("/tes/add/")
     def addutang():
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi", 100)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi2", 10)
-        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "andy", "nasi3", -35)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
+        a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
         
         a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
         a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
@@ -321,7 +316,7 @@ def create_app(test_config=None):
     
     @app.route("/tes/detail/")
     def detail1():
-        x = detail("U8cea9944d781b6557cfba7ce0e9c91c7", "andy")
+        x = detail("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
         print (x)
         return 'OK ' + x
 
@@ -333,7 +328,7 @@ def create_app(test_config=None):
 
     @app.route("/tes/pay/")
     def pay1():
-        x = pay   ("U8cea9944d781b6557cfba7ce0e9c91c7", "andy")
+        x = pay   ("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
         return 'OK'
     
     return app
