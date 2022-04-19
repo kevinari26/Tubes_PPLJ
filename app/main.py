@@ -46,7 +46,8 @@ heroku git:remote -a vast-mesa-95190
 import os
 from app.db import setup_db, db_drop_and_create_all
 from app.db import register, add, add_confirm, detail, total, pay, pay_confirm
-from app.db import getUser, getUtang 
+from app.db import getUser, getUtang
+import flask
 from flask import Flask, request, abort
 from flask_cors import CORS
 from linebot import LineBotApi, WebhookHandler
@@ -85,6 +86,7 @@ def create_app(test_config=None):
         msg = event.message.text
 
         if (msg.lower().strip() == "halo"):
+            print (flask.__version__)
             line_bot_api.reply_message(
                 event.reply_token,
                 TextSendMessage (text = "halo juga")
@@ -120,7 +122,7 @@ def create_app(test_config=None):
                         TemplateSendMessage(
                             alt_text = "Tagihan utang. Cek tagihan di smartphone Anda.",
                             template = ConfirmTemplate(
-                                text = "Tagihan utang '%s' dari '%s' sebesar '%.3f'" % (komen, lender, harga),
+                                text = "Tagihan utang '%s' dari '%s' sebesar '%.3f'." % (komen, lender, harga),
                                 actions=[
                                     PostbackAction(
                                         label = "terima tagihan",

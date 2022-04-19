@@ -161,7 +161,7 @@ def searchArr (arr, eleToSearch): # search dari array, return indexnya (-1 = tid
 def register(id_line, username):
     listIdLine = DaftarUser.searchUser (id_line) # cek apakah id line sudah pernah register
     if (len(listIdLine)): # jika id line sudah pernah register
-        return "Registrasi gagal.\nAkun Line ini sudah pernah melakukan registrasi dengan username: %s" % (listIdLine[0].username)
+        return "Registrasi gagal.\nAkun Line ini sudah pernah melakukan registrasi dengan username: '%s'" % (listIdLine[0].username)
     else: # jika id line belum pernah register
         tempArr = username.split() # penampung username
         if (len(tempArr)==1) & (tempArr[0]!=""): # username tidak ada spasi
@@ -186,7 +186,7 @@ def add(id_line, debtor, komen, harga):
         id_line_debtor = cekDebtor[0].id_line
         # insert utang ke database
         nomor = DaftarUtang(id_lender, id_debtor, komen, harga, time_insert).insert()
-        return ("Penambahan utang '%s' untuk '%s' sebesar '%.3f' berhasil dilakukan.\nMenunggu konfirmasi dari %s." % (komen, debtor, harga, debtor), lender, id_line_debtor, nomor)
+        return ("Penambahan utang '%s' untuk '%s' sebesar '%.3f' berhasil dilakukan.\nMenunggu konfirmasi dari '%s'." % (komen, debtor, harga, debtor), lender, id_line_debtor, nomor)
     else:
         return ("Akun Anda dan/atau akun target belum melakukan registrasi.", 0, 0, 0)
 
@@ -222,7 +222,7 @@ def detail(id_line, debtor):
             else: # lender berutang ke debtor
                 out_string += "%.3f | %s\n" % (-row.harga, row.komen)
                 sum -= row.harga
-        out_string += "\nTotal utang '%s' kepada '%s': %.3f" % (debtor[1], lender[1], sum)
+        out_string += "\nTotal utang '%s' kepada '%s' = %.3f" % (debtor[1], lender[1], sum)
         return out_string
     else:
         return "Akun Anda dan/atau akun target belum melakukan registrasi."
@@ -264,7 +264,7 @@ def total (id_line):
             if (arrDibayar_harga[i] > 0): 
                 out_string += "%s: %.3f\n" % (DaftarUser.userById(arrDibayar_oleh[i]), abs(arrDibayar_harga[i]))
                 sum += arrDibayar_harga[i]
-        out_string += "\nTotal utang yang harus dibayar '%s': %.3f" % (lender[1], -sum)
+        out_string += "\nTotal utang yang harus dibayar '%s' = %.3f" % (lender[1], -sum)
         return out_string
     else:
         return "Akun Anda belum melakukan registrasi."
