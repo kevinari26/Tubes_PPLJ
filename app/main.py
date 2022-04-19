@@ -1,45 +1,44 @@
-'''
-run lokal: http://127.0.0.1:5000/tes/getall/
-run cloud: https://botutang.herokuapp.com/tes/tab1/
+# run lokal: http://127.0.0.1:5000/tes/getall/
+# run cloud: https://botutang.herokuapp.com/tes/tab1/
 
-https://botutang.herokuapp.com/tes/getall/
-link git jojo: https://github.com/JonathanGun/UtangBot
-heroku login
-heroku create
-heroku addons:create heroku-postgresql:hobby-dev --app botutang
-heroku config --app botutang
-heroku pg:psql --app botutang
-heroku logs --tail --app botutang
+# https://botutang.herokuapp.com/tes/getall/
+# link git jojo: https://github.com/JonathanGun/UtangBot
+# heroku login
+# heroku create
+# heroku addons:create heroku-postgresql:hobby-dev --app botutang
+# heroku config --app botutang
+# heroku pg:psql --app botutang
+# heroku logs --tail --app botutang
 
-procfile old: web: gunicorn wsgi:app
-procfile new: web: gunicorn --bind 0.0.0.0:$PORT wsgi:app
+# procfile old: web: gunicorn wsgi:app
+# procfile new: web: gunicorn --bind 0.0.0.0:$PORT wsgi:app
 
-# upload kode ke server
-cd C:\Users\LENOVO\Downloads\ITB\PPLJ (Perancangan Perangkat Lunak Jaringan)\Tubes\Source
-git push heroku main
-# log
-heroku logs --tail --app botutang
+# # upload kode ke server
+# cd C:\Users\LENOVO\Downloads\ITB\PPLJ (Perancangan Perangkat Lunak Jaringan)\Tubes\Source
+# git push heroku main
+# # log
+# heroku logs --tail --app botutang
 
 
-# tutorial run 
-heroku login
-heroku git:clone -a botutang 
-cd botutang
-git add .
-git commit -am "make it better"
-git push heroku master
+# # tutorial run 
+# heroku login
+# heroku git:clone -a botutang 
+# cd botutang
+# git add .
+# git commit -am "make it better"
+# git push heroku master
 
-heroku login
-cd my-project/
-git init
-heroku git:remote -a vast-mesa-95190
-git add .
-git commit -am "make it better"
-git push heroku master
-heroku git:remote -a vast-mesa-95190
+# heroku login
+# cd my-project/
+# git init
+# heroku git:remote -a vast-mesa-95190
+# git add .
+# git commit -am "make it better"
+# git push heroku master
+# heroku git:remote -a vast-mesa-95190
 
-print flask: print (flask.__version__)
-'''
+# print flask: print (flask.__version__)
+
 
 # register <username>
 # add <username debtor> <komentar> <harga>
@@ -56,7 +55,7 @@ from flask_cors import CORS
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError, LineBotApiError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
-from linebot.models import ConfirmTemplate, MessageAction, MessageEvent, PostbackAction, PostbackEvent, SourceGroup, SourceRoom, TemplateSendMessage, TextMessage, TextSendMessage  # NOQA
+from linebot.models import ConfirmTemplate, MessageEvent, PostbackAction, PostbackEvent, TemplateSendMessage, TextMessage, TextSendMessage  # NOQA
 
 
 def create_app(test_config=None):
