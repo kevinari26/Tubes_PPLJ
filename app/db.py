@@ -114,10 +114,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
     
     @classmethod
     def detailForPay(cls, id_user, id_target):
-        return cls.query.with_entities(
-            cls.id_lender,
-            cls.id_debtor,
-        ).filter( # search detail utang 2 orang tertentu
+        return cls.query.filter( # search detail utang 2 orang tertentu
             (((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
             ((cls.id_lender == id_target) & (cls.id_debtor == id_user))) &
             (cls.status == 1)
@@ -237,7 +234,7 @@ def total (id_line):
         arrDibayar_harga = []
 
         for ele in listUtang:
-            print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.harga))
+            # print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.harga))
             if (ele.id_lender == lender[0]): # jika debtor berutang ke lender
                 index = searchArr (arrDibayar_oleh, ele.id_debtor) # cek apakah debtor sudah ada di arrDibayar_oleh
                 if (index == -1): # jika tidak ditemukan

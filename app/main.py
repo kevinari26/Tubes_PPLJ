@@ -9,14 +9,15 @@ heroku create
 heroku addons:create heroku-postgresql:hobby-dev --app botutang
 heroku config --app botutang
 heroku pg:psql --app botutang
-heroku logs --tail
 heroku logs --tail --app botutang
 
 procfile old: web: gunicorn wsgi:app
 
 # upload kode ke server
+cd C:\Users\LENOVO\Downloads\ITB\PPLJ (Perancangan Perangkat Lunak Jaringan)\Tubes\Source
 git push heroku main
-heroku git:remote -a botutang
+# log
+heroku logs --tail --app botutang
 
 
 # tutorial run 
@@ -307,22 +308,14 @@ def create_app(test_config=None):
     def addutang():
         id_line_ari  = "U8cea9944d781b6557cfba7ce0e9c91c7"
         id_line_andy = "U3d13f5d6ce0d932f34429b7555af1f50"
+        
         # out_string, lender, id_line_debtor, nomor
         a, b, c, d = add(id_line_ari, "luck", "nasi", 12, 1)
         a, b, c, d = add(id_line_andy, "ari", "Tatang 15", 16, 1)
         a, b, c, d = add(id_line_andy, "ari", "test2 g 16", 20, 1)
         
-        # a, b, c, d = add("123", "ari", "lauk lauk", 20)
-        # a, b, c, d = add("123", "ari", "lauk lauk 2", 30)
-
-        # a, b, c, d = add("12345", "kevin", "lauk", 20)
-        # a, b, c, d = add("12345", "kevin", "mie goreng", 30)
-        
         # a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
         # a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
-
-        # a, b, c, d = add("123456", "kevin", "sayur", 25)
-        # a, b, c, d = add("123456", "kevin", "nasi goreng", 31)
         return 'OK'
     
     @app.route("/tes/detail/")
@@ -341,7 +334,7 @@ def create_app(test_config=None):
 
     @app.route("/tes/pay/")
     def pay1():
-        x = pay   ("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
+        x = pay ("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
         return 'OK'
     
 
