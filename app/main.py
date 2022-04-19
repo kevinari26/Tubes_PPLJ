@@ -12,6 +12,7 @@ heroku pg:psql --app botutang
 heroku logs --tail --app botutang
 
 procfile old: web: gunicorn wsgi:app
+procfile new: web: gunicorn --bind 0.0.0.0:$PORT wsgi:app
 
 # upload kode ke server
 cd C:\Users\LENOVO\Downloads\ITB\PPLJ (Perancangan Perangkat Lunak Jaringan)\Tubes\Source
