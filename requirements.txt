@@ -1,7 +1,6 @@
 flask
 gunicorn
 line-bot-sdk
-pytz
 psycopg2
 flask-sqlalchemy
 flask-cors

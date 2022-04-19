@@ -1,6 +1,5 @@
 import os
 from datetime import datetime, timedelta
-import pytz
 from flask_sqlalchemy import SQLAlchemy
 
 LOCAL_TIMEZONE_GMT = 7
