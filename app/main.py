@@ -335,7 +335,42 @@ def create_app(test_config=None):
     @app.route("/tes/pay/")
     def pay1():
         # x = pay ("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
-        x = pay ("U3d13f5d6ce0d932f34429b7555af1f50", "ari")
+        # x = pay ("U3d13f5d6ce0d932f34429b7555af1f50", "ari")
+        id_line_ari  = "U8cea9944d781b6557cfba7ce0e9c91c7"
+        id_line_andy = "U3d13f5d6ce0d932f34429b7555af1f50"
+        out_string, id_line_lender, lender, debtor, dibayarKeLender, arrNomor = pay (id_line_andy, "ari")
+                
+        if (debtor != 0): # pay berhasil
+            stringNomor = ""
+            for ele in arrNomor:
+                stringNomor += "%d " % ele
+            line_bot_api.push_message( # push message untuk lender
+                id_line_lender,
+                messages=[
+                TemplateSendMessage(
+                    alt_text = "Pembayaran utang. Cek tagihan di smartphone Anda.",
+                    template = ConfirmTemplate(
+                        text = "'%s' melakukan pembayaran utang sebesar '%.3f'." % (debtor, dibayarKeLender),
+                        actions=[
+                            PostbackAction(
+                                label = "sudah diterima",
+                                display_text = "Pembayaran utang sudah diterima dari '%s' sebesar '%.3f'" % (debtor, dibayarKeLender),
+                                # kirim command, confirm, id_line_debtor, lender, dibayarKeLender, arrNomor
+                                data = "pay_confirm 1 %s %s %.3f %s" % (id_line_andy, lender, dibayarKeLender, stringNomor)
+                            ),
+                            PostbackAction(
+                                label = "belum diterima",
+                                display_text = "Pembayaran utang belum diterima dari '%s' sebesar '%.3f'" % (debtor, dibayarKeLender),
+                                data = "pay_confirm 0 %s %s %.3f %s" % (id_line_andy, lender, dibayarKeLender, stringNomor)
+                            ),
+                        ]
+                    )
+                )],
+            )
+        # line_bot_api.reply_message( # reply message untuk user
+        #     event.reply_token,
+        #     TextSendMessage (text = out_string)
+        # )
         return 'OK'
     
 
