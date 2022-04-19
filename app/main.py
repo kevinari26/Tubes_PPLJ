@@ -334,7 +334,8 @@ def create_app(test_config=None):
 
     @app.route("/tes/pay/")
     def pay1():
-        x = pay ("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
+        # x = pay ("U8cea9944d781b6557cfba7ce0e9c91c7", "luck")
+        x = pay ("U3d13f5d6ce0d932f34429b7555af1f50", "ari")
         return 'OK'
     
 
