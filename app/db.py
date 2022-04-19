@@ -74,7 +74,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
     id_debtor = db.Column(db.Integer) # id peminjam
     komen = db.Column(db.String(30)) # username
     harga = db.Column(db.Float) # besar utang
-    status = db.Column(db.Integer, default=0)
+    status = db.Column(db.Integer)
     # 0: utang baru masuk
     # 1: utang dikonfirmasi 'terima'
     # 2: utang dikonfirmasi 'tolak'
@@ -84,11 +84,12 @@ class DaftarUtang(db.Model): # tabel daftar utang
     time_lunas = db.Column(db.DateTime(timezone=True))
 
 
-    def __init__(self, id_lender, id_debtor, komen, harga, time_insert): # constructor
+    def __init__(self, id_lender, id_debtor, komen, harga, status, time_insert): # constructor
         self.id_lender = id_lender
         self.id_debtor = id_debtor
         self.komen = komen
         self.harga = harga
+        self.status = status
         self.time_insert = time_insert
     def insert(self): # insert ke database
         db.session.add(self)
@@ -175,7 +176,7 @@ def register(id_line, username):
         elif (len(tempArr)!=1): # username ada spasi
             return "Registrasi gagal.\nUsername tidak boleh menggunakan spasi!"
 
-def add(id_line, debtor, komen, harga):
+def add(id_line, debtor, komen, harga, status):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
     cekDebtor = DaftarUser.searchUser (debtor) # cek apakah debtor sudah register
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
@@ -185,7 +186,7 @@ def add(id_line, debtor, komen, harga):
         lender = cekLender[0].username
         id_line_debtor = cekDebtor[0].id_line
         # insert utang ke database
-        nomor = DaftarUtang(id_lender, id_debtor, komen, harga, time_insert).insert()
+        nomor = DaftarUtang(id_lender, id_debtor, komen, harga, status, time_insert).insert()
         return ("Penambahan utang '%s' untuk '%s' sebesar '%.3f' berhasil dilakukan.\nMenunggu konfirmasi dari '%s'." % (komen, debtor, harga, debtor), lender, id_line_debtor, nomor)
     else:
         return ("Akun Anda dan/atau akun target belum melakukan registrasi.", 0, 0, 0)
@@ -229,15 +230,14 @@ def detail(id_line, debtor):
 
 def total (id_line):
     cekLender = DaftarUser.searchUser (id_line) # cek apakah lender sudah register
-    # print ("halooooo %d" % (len(cekLender)))
-    if (len(cekLender)):
+    if (len(cekLender)): # sudah register
         lender = [cekLender[0].id_user, cekLender[0].username] # id_user, username
         listUtang = DaftarUtang.detailForSum(lender[0])
         arrDibayar_oleh = []
         arrDibayar_harga = []
 
         for ele in listUtang:
-            # print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.harga))
+            print ("%d %d %.3f" % (ele.id_lender, ele.id_debtor, ele.harga))
             if (ele.id_lender == lender[0]): # jika debtor berutang ke lender
                 index = searchArr (arrDibayar_oleh, ele.id_debtor) # cek apakah debtor sudah ada di arrDibayar_oleh
                 if (index == -1): # jika tidak ditemukan
@@ -248,7 +248,7 @@ def total (id_line):
             else: # jika lender berutang ke debtor
                 index = searchArr (arrDibayar_oleh, ele.id_lender) # cek apakah lender sudah ada di arrDibayar_oleh
                 if (index == -1): # jika tidak ditemukan
-                    arrDibayar_oleh.append (ele.id_debtor)
+                    arrDibayar_oleh.append (ele.id_lender)
                     arrDibayar_harga.append (-ele.harga)
                 else: # jika ditemukan
                     arrDibayar_harga[index] -= ele.harga
@@ -261,7 +261,7 @@ def total (id_line):
                 sum += arrDibayar_harga[i]
         out_string += "\n'%s' akan dibayar oleh:\n" % (lender[1])
         for i in range (len(arrDibayar_harga)):
-            if (arrDibayar_harga[i] > 0): 
+            if (arrDibayar_harga[i] > 0):
                 out_string += "%s: %.3f\n" % (DaftarUser.userById(arrDibayar_oleh[i]), abs(arrDibayar_harga[i]))
                 sum += arrDibayar_harga[i]
         out_string += "\nTotal utang yang harus dibayar '%s' = %.3f" % (lender[1], -sum)

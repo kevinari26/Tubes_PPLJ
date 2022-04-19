@@ -113,7 +113,7 @@ def create_app(test_config=None):
                 temp = temp[1].rsplit(" ", 1)
                 komen = temp[0].strip() # keterangan benda yang diutangkan
                 harga = float(temp[1])
-                out_string, lender, id_line_debtor, nomor = add(event.source.user_id, debtor, komen, harga)
+                out_string, lender, id_line_debtor, nomor = add(event.source.user_id, debtor, komen, harga, 0)
                 
                 if (lender != 0): # add utang berhasil
                     line_bot_api.push_message( # push message untuk debtor
@@ -296,52 +296,33 @@ def create_app(test_config=None):
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
         x = register("U3d13f5d6ce0d932f34429b7555af1f50", "luck")
         x = register("U96e17e28d1c66ed292688b530b929084", "Sebastian")
-        # x = register("123", "sam")
-
-
-        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
-        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
-        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
-        
-        # a, b, c, d = addUtang("123", "ari", "lauk lauk", 20)
-        # a, b, c, d = addUtang("123", "ari", "lauk lauk 2", 30)
-
-        # a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "lauk", 20)
-        # a, b, c, d = addUtang("U3d13f5d6ce0d932f34429b7555af1f50", "sam", "mie goreng", 30)
-        
-        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
-        # a, b, c, d = addUtang("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
-
-        # a, b, c, d = addUtang("123456", "sam", "sayur", 25)
-        # a, b, c, d = addUtang("123456", "sam", "nasi goreng", 31)
-
         return 'OK'
     
     @app.route("/tes/reg/")
     def reg():
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
-        x = register("12345", "luck")
-        x = register("123456", "sebas")
-        x = register("123", "jonathan")
         return "OK %s" % (x)
 
     @app.route("/tes/add/")
     def addutang():
-        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi", 100)
-        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi2", 10)
-        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "luck", "nasi3", -35)
+        id_line_ari  = "U8cea9944d781b6557cfba7ce0e9c91c7"
+        id_line_andy = "U3d13f5d6ce0d932f34429b7555af1f50"
+        # out_string, lender, id_line_debtor, nomor
+        a, b, c, d = add(id_line_ari, "luck", "nasi", 12, 1)
+        a, b, c, d = add(id_line_andy, "ari", "Tatang 15", 16, 1)
+        a, b, c, d = add(id_line_andy, "ari", "test2 g 16", 20, 1)
         
-        a, b, c, d = add("123", "ari", "lauk lauk", 20)
-        a, b, c, d = add("123", "ari", "lauk lauk 2", 30)
+        # a, b, c, d = add("123", "ari", "lauk lauk", 20)
+        # a, b, c, d = add("123", "ari", "lauk lauk 2", 30)
 
-        a, b, c, d = add("12345", "kevin", "lauk", 20)
-        a, b, c, d = add("12345", "kevin", "mie goreng", 30)
+        # a, b, c, d = add("12345", "kevin", "lauk", 20)
+        # a, b, c, d = add("12345", "kevin", "mie goreng", 30)
         
-        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
-        a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
+        # a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ayam rebus", 8)
+        # a, b, c, d = add("U8cea9944d781b6557cfba7ce0e9c91c7", "sebas", "ikan", 9)
 
-        a, b, c, d = add("123456", "kevin", "sayur", 25)
-        a, b, c, d = add("123456", "kevin", "nasi goreng", 31)
+        # a, b, c, d = add("123456", "kevin", "sayur", 25)
+        # a, b, c, d = add("123456", "kevin", "nasi goreng", 31)
         return 'OK'
     
     @app.route("/tes/detail/")
@@ -352,6 +333,8 @@ def create_app(test_config=None):
 
     @app.route("/tes/total/")
     def total1():
+        x = total ("U3d13f5d6ce0d932f34429b7555af1f50")
+        print (x)
         x = total ("U8cea9944d781b6557cfba7ce0e9c91c7")
         print (x)
         return 'OK ' + x
