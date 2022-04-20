@@ -294,14 +294,16 @@ def create_app(test_config=None):
     def reset_db():
         db_drop_and_create_all()
         
-        x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
-        x = register("U3d13f5d6ce0d932f34429b7555af1f50", "luck")
-        x = register("U96e17e28d1c66ed292688b530b929084", "Sebastian")
+        # x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
+        # x = register("U3d13f5d6ce0d932f34429b7555af1f50", "luck")
+        # x = register("U96e17e28d1c66ed292688b530b929084", "Sebastian")
         return 'OK'
     
     @app.route("/tes/reg/")
     def reg():
         x = register("U8cea9944d781b6557cfba7ce0e9c91c7", "ari")
+        x = register("U3d13f5d6ce0d932f34429b7555af1f50", "luck")
+        x = register("U96e17e28d1c66ed292688b530b929084", "Sebastian")
         return "OK %s" % (x)
 
     @app.route("/tes/add/")
