@@ -238,7 +238,7 @@ def create_app(test_config=None):
                 # command, nomor, status, id_line_lender, debtor, komen, harga
                 tempArr = event.postback.data.split(" ", 5) # split data
                 nomor = int(tempArr[1])
-                status = tempArr[2]
+                status = int(tempArr[2])
                 id_line_lender = tempArr[3]
                 debtor = tempArr[4]
                 tempArr = tempArr[5].rsplit(" ", 1)
@@ -262,14 +262,14 @@ def create_app(test_config=None):
             elif (command == "pay_confirm"):
                 # command, confirm, id_line_debtor, lender, dibayarKeLender, arrNomor
                 tempArr = event.postback.data.split(" ", 5) # split data
-                confirm = tempArr[1]
+                confirm = int(tempArr[1])
                 id_line_debtor = tempArr[2]
                 lender = tempArr[3]
                 dibayarKeLender = tempArr[4]
                 arrNomor = list(map(int, tempArr[5].split()))
                 temp = pay_confirm (arrNomor)
                 if (temp == 0): # konfirmasi berhasil
-                    if (confirm == "1"): # konfirmasi diterima
+                    if (confirm == 1): # konfirmasi diterima
                         out_string = "Konfirmasi pembayaran utang kepada '%s' sebesar '%s' telah diterima oleh '%s'." % (lender, dibayarKeLender, lender)
                     else: # konfirmasi ditolak
                         out_string = "Konfirmasi pembayaran utang kepada '%s' sebesar '%s' telah ditolak oleh '%s'." % (lender, dibayarKeLender, lender)
