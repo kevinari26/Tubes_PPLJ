@@ -44,7 +44,7 @@
 # add <username debtor> <komentar> <harga>
 # detail <username debtor>
 # total
-# pay <username debtor>
+# pay <username lender>
 
 import os
 from app.db import setup_db, db_drop_and_create_all
@@ -96,7 +96,7 @@ def create_app(test_config=None):
         elif (msg.lower().startswith('register ')):
             # register <username>
             try:
-                username = msg.split(" ", 1)[1].strip()
+                username = msg.split(" ", 1)[1].strip().lower()
                 out_string = register (sender_id, username)
                 
                 line_bot_api.reply_message(
@@ -173,7 +173,7 @@ def create_app(test_config=None):
                 print (e)
         
         elif (msg.lower().startswith('pay ')):
-            # pay <username debtor>
+            # pay <username lender>
             try:
                 # butuh out_string, id_line_lender, debtor, dibayarKeLender
                 user_lender = msg.split(" ", 1)[1].strip()
@@ -215,7 +215,7 @@ def create_app(test_config=None):
         
         elif (msg == "help"):
             try:
-                out_string = 'register <username>\n'\
+                out_string = 'register <username> (username akan dilower case)\n'\
                     'add <username target> <komentar> <harga>\n'\
                     'detail <username target>\n'\
                     'total\n'\

@@ -266,8 +266,8 @@ def total (id_line):
         return "Akun Anda belum melakukan registrasi."
 
 def pay (id_line, user_lender):
-    cekLender = DaftarUser.searchUser (id_line) # cek apakah debtor sudah register
-    cekDebtor = DaftarUser.searchUser (user_lender) # cek apakah lender sudah register
+    cekDebtor = DaftarUser.searchUser (id_line) # cek apakah debtor sudah register
+    cekLender = DaftarUser.searchUser (user_lender) # cek apakah lender sudah register
     if (len(cekLender) & len(cekDebtor)): # jika lender dan debtor sudah register
         lender = [cekLender[0].id_user, cekLender[0].username] # id, username
         id_line_lender = cekLender[0].id_line
