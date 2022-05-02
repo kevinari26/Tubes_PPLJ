@@ -281,7 +281,7 @@ def pay (id_line, user_lender):
                 dibayarKeLender += ele.harga
             else:
                 dibayarKeLender -= ele.harga
-        if (dibayarKeLender > 0):
+        if (dibayarKeLender > 0): # jika utangnya positif
             return "Pembayaran utang sebesar '%.3f' kepada '%s' telah dilakukan.\nMenunggu konfirmasi dari '%s'" % (dibayarKeLender, lender[1], lender[1]), id_line_lender, lender[1], debtor[1], dibayarKeLender, arrNomor
         else: # utangnya 0 atau negatif
             return "Anda tidak memiliki utang kepada '%s'." % (lender[1]), 0, 0, 0, 0, 0
