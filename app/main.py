@@ -267,7 +267,7 @@ def create_app(test_config=None):
                 lender = tempArr[3]
                 dibayarKeLender = tempArr[4]
                 arrNomor = list(map(int, tempArr[5].split()))
-                temp = pay_confirm (arrNomor)
+                temp = pay_confirm (arrNomor, confirm)
                 if (temp == 0): # konfirmasi berhasil
                     if (confirm == 1): # konfirmasi diterima
                         out_string = "Konfirmasi pembayaran utang kepada '%s' sebesar '%s' telah diterima oleh '%s'." % (lender, dibayarKeLender, lender)
