@@ -106,7 +106,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
         return cls.query.filter( # search detail utang 2 orang tertentu
             (((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
             ((cls.id_lender == id_target) & (cls.id_debtor == id_user))) &
-            (cls.status == 1)
+            (cls.status == 1) # hanya ambil utang yang sudah dikonfirmasi
         ).order_by(
             cls.nomor,
         ).all()
@@ -116,7 +116,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
         return cls.query.filter( # search detail utang 2 orang tertentu
             (((cls.id_lender == id_user) & (cls.id_debtor == id_target)) |
             ((cls.id_lender == id_target) & (cls.id_debtor == id_user))) &
-            (cls.status == 1)
+            (cls.status == 1) # hanya ambil utang yang sudah dikonfirmasi
         ).order_by(
             cls.nomor,
         ).all()
@@ -129,7 +129,7 @@ class DaftarUtang(db.Model): # tabel daftar utang
             db.func.sum(cls.harga).label("harga"),
         ).filter( # search id_line atau username sesuai stringToSearch
             ((cls.id_lender == id_user) | (cls.id_debtor == id_user)) &
-            (cls.status == 1)
+            (cls.status == 1) # hanya ambil utang yang sudah dikonfirmasi
         ).group_by(
             cls.id_lender,
             cls.id_debtor,
@@ -288,16 +288,21 @@ def pay (id_line, user_lender):
     else:
         return "Username Anda dan/atau username target belum melakukan registrasi.", 0, 0, 0, 0, 0
 
-def pay_confirm (arrNomor):
+def pay_confirm (arrNomor, confirm):
+    # 0: utang baru masuk
+    # 1: utang dikonfirmasi 'terima'
+    # 2: utang dikonfirmasi 'tolak'
+    # 3: utang sudah dilunasi
     data0 = DaftarUtang.searchByNomor (arrNomor[0])
-    if (data0.status == 1): # belum pernah dikonfirmasi
-        for nomor in arrNomor:
-            data = DaftarUtang.searchByNomor (nomor)
-            data.status = 3
-            data.time_lunas = datetime.now() + timedelta(hours=LOCAL_TIMEZONE_GMT)
-            data.update()
+    if (data0.status == 1): # belum dikonfirmasi diterima
+        if (confirm == 1):
+            for nomor in arrNomor:
+                data = DaftarUtang.searchByNomor (nomor)
+                data.status = 3
+                data.time_lunas = datetime.now() + timedelta(hours=LOCAL_TIMEZONE_GMT)
+                data.update()
         return 0
-    else: # sudah pernah dikonfirmasi
+    else: # sudah pernah dikonfirmasi diterima
         return "Pembayaran utang ini sudah pernah dikonfirmasi."
 
 
