@@ -110,7 +110,7 @@ def create_app(test_config=None):
             # add <username debtor> <komentar> <harga>
             try:
                 temp = msg.split(" ", 1)[1].strip().split(" ", 1)
-                debtor = temp[0].strip() # username debtor
+                debtor = temp[0].strip().lower() # username debtor
                 temp = temp[1].rsplit(" ", 1)
                 komen = temp[0].strip() # keterangan benda yang diutangkan
                 harga = float(temp[1])
@@ -213,7 +213,7 @@ def create_app(test_config=None):
             except LineBotApiError as e:
                 print (e)
         
-        elif (msg == "help"):
+        elif (msg.lower() == "help"):
             try:
                 out_string = 'register <username> (username akan dilower case)\n'\
                     'add <username target> <komentar> <harga>\n'\
